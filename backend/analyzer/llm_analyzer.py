@@ -19,14 +19,17 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = (
     "당신은 게임 운영 전문 애널리스트입니다. "
-    "게임 커뮤니티 게시글을 분석하여 운영자/기획자/마케터가 즉시 활용할 수 있는 인사이트를 제공합니다."
+    "Steam 커뮤니티의 유저 리뷰와 공식 뉴스를 분석하여 "
+    "운영자/기획자/마케터가 즉시 활용할 수 있는 인사이트를 한국어로 제공합니다."
 )
 
-USER_PROMPT_TEMPLATE = """다음은 '{game_name}' 게임 커뮤니티의 최근 게시글 {count}개입니다.
+USER_PROMPT_TEMPLATE = """다음은 Steam '{game_name}' 게임의 최근 데이터 {count}건입니다.
+(리뷰: 유저 작성, 뉴스: 공식 패치노트/공지)
 
 {posts_text}
 
-위 게시글을 분석하여 아래 JSON 형식으로만 응답하세요. JSON 외의 텍스트는 포함하지 마세요.
+위 데이터를 분석하여 아래 JSON 형식으로만 응답하세요. JSON 외의 텍스트는 포함하지 마세요.
+리뷰의 "Recommended"/"Not Recommended" 여부를 sentiment 산정에 반영하세요.
 
 {{
   "summary": "전체 동향 3~5줄 요약",
@@ -44,9 +47,10 @@ USER_PROMPT_TEMPLATE = """다음은 '{game_name}' 게임 커뮤니티의 최근 
 def _build_posts_text(posts: list[Post]) -> str:
     lines = []
     for i, post in enumerate(posts, 1):
-        lines.append(f"[{i}] 제목: {post.title or '(없음)'}")
+        label = f"[{post.post_type.upper()}]" if post.post_type else ""
+        lines.append(f"[{i}] {label} {post.title or '(제목 없음)'}")
         if post.content:
-            lines.append(f"    내용: {post.content[:300]}")
+            lines.append(f"    {post.content[:300]}")
         lines.append(f"    좋아요: {post.like_count} | 댓글: {post.comment_count}")
         lines.append("")
     return "\n".join(lines)

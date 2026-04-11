@@ -25,17 +25,19 @@ async def get_db():
             raise
 
 
+# Steam 인기 게임 Top 10 (Steam Charts 기준 동시접속자 상위권)
+# thumbnail: https://cdn.cloudflare.steamstatic.com/steam/apps/{appid}/header.jpg
 SEED_GAMES = [
-    {"name": "리그 오브 레전드", "lounge_id": "lol", "thumbnail_url": "https://game.naver.com/static_web/images/game_lounge/lol_logo.png"},
-    {"name": "메이플스토리", "lounge_id": "maplestory", "thumbnail_url": "https://game.naver.com/static_web/images/game_lounge/maplestory_logo.png"},
-    {"name": "피파 온라인 4", "lounge_id": "fifaonline4", "thumbnail_url": "https://game.naver.com/static_web/images/game_lounge/fifaonline4_logo.png"},
-    {"name": "오버워치 2", "lounge_id": "overwatch2", "thumbnail_url": "https://game.naver.com/static_web/images/game_lounge/overwatch2_logo.png"},
-    {"name": "배틀그라운드", "lounge_id": "pubg", "thumbnail_url": "https://game.naver.com/static_web/images/game_lounge/pubg_logo.png"},
-    {"name": "로스트아크", "lounge_id": "lostark", "thumbnail_url": "https://game.naver.com/static_web/images/game_lounge/lostark_logo.png"},
-    {"name": "발로란트", "lounge_id": "valorant", "thumbnail_url": "https://game.naver.com/static_web/images/game_lounge/valorant_logo.png"},
-    {"name": "던전앤파이터", "lounge_id": "df", "thumbnail_url": "https://game.naver.com/static_web/images/game_lounge/df_logo.png"},
-    {"name": "스타크래프트", "lounge_id": "starcraft", "thumbnail_url": "https://game.naver.com/static_web/images/game_lounge/starcraft_logo.png"},
-    {"name": "서든어택", "lounge_id": "suddenattack", "thumbnail_url": "https://game.naver.com/static_web/images/game_lounge/suddenattack_logo.png"},
+    {"name": "Counter-Strike 2", "app_id": "730", "thumbnail_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/730/header.jpg"},
+    {"name": "Dota 2", "app_id": "570", "thumbnail_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/570/header.jpg"},
+    {"name": "PUBG: BATTLEGROUNDS", "app_id": "578080", "thumbnail_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/578080/header.jpg"},
+    {"name": "Elden Ring", "app_id": "1245620", "thumbnail_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/header.jpg"},
+    {"name": "Baldur's Gate 3", "app_id": "1086940", "thumbnail_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/1086940/header.jpg"},
+    {"name": "Rust", "app_id": "252490", "thumbnail_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/252490/header.jpg"},
+    {"name": "Cyberpunk 2077", "app_id": "1091500", "thumbnail_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/header.jpg"},
+    {"name": "Valheim", "app_id": "892970", "thumbnail_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/892970/header.jpg"},
+    {"name": "Terraria", "app_id": "105600", "thumbnail_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/105600/header.jpg"},
+    {"name": "Team Fortress 2", "app_id": "440", "thumbnail_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/440/header.jpg"},
 ]
 
 

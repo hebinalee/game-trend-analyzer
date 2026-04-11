@@ -1,7 +1,7 @@
 # Game Trend Analyzer
 
-네이버 게임 라운지의 인기 게임 10개를 대상으로 매일 게시글/댓글을 수집·분석하여
-게임 운영자/기획자/마케터가 유저 동향을 한눈에 파악할 수 있는 대시보드 서비스입니다.
+Steam 인기 게임 10개를 대상으로 매일 유저 리뷰와 공식 뉴스를 수집·분석하여
+게임 운영자/기획자/마케터가 커뮤니티 동향을 한눈에 파악할 수 있는 대시보드 서비스입니다.
 
 ## 요구사항
 
@@ -50,12 +50,20 @@ docker-compose up --build
 ## 아키텍처
 
 ```
-Naver Game Lounge → Playwright Crawler → PostgreSQL
-                                              ↓
+Steam Review API  ─┐
+Steam News API    ─┼→ httpx Crawler → PostgreSQL
+                   ┘                      ↓
                               Claude API ← LLM Analyzer
                                               ↓
                           React Frontend ← FastAPI Backend
 ```
+
+## 수집 데이터
+
+| 유형 | 출처 | 내용 |
+|------|------|------|
+| `review` | Steam 리뷰 API | 유저 추천/비추천 + 리뷰 텍스트 |
+| `news` | Steam 뉴스 API | 공식 패치노트, 업데이트 공지 |
 
 ## 스케줄
 

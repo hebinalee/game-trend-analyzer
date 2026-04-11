@@ -7,7 +7,6 @@ psycopg2-binary==2.9.9
 pydantic==2.7.1
 pydantic-settings==2.2.1
 anthropic==0.26.0
-playwright==1.43.0
 apscheduler==3.10.4
 python-dotenv==1.0.1
 httpx==0.27.0

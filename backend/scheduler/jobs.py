@@ -14,7 +14,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from config import settings
 from database import async_session
-from crawler.naver_lounge import crawl_all_games
+from crawler.steam_community import crawl_all_games
 from analyzer.llm_analyzer import analyze_all_games
 
 logger = logging.getLogger(__name__)

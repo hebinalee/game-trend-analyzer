@@ -9,7 +9,7 @@ from scheduler.jobs import start_scheduler, stop_scheduler
 from api.games import router as games_router
 from api.reports import router as reports_router
 from api.dashboard import router as dashboard_router
-from crawler.naver_lounge import crawl_all_games
+from crawler.steam_community import crawl_all_games
 from analyzer.llm_analyzer import analyze_all_games
 
 logging.basicConfig(level=logging.INFO)
@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Game Trend Analyzer API",
-    description="네이버 게임 라운지 유저 동향 분석 서비스",
+    description="Steam 커뮤니티 유저 동향 분석 서비스",
     version="1.0.0",
     lifespan=lifespan,
 )

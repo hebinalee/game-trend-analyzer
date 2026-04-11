@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 class GameBase(BaseModel):
     name: str
-    lounge_id: str
+    app_id: str
     thumbnail_url: str | None = None
 
 
