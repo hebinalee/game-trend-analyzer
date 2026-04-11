@@ -49,14 +49,7 @@ docker-compose up --build
 
 ## 아키텍처
 
-```
-Steam Review API  ─┐
-Steam News API    ─┼→ httpx Crawler → PostgreSQL
-                   ┘                      ↓
-                              Claude API ← LLM Analyzer
-                                              ↓
-                          React Frontend ← FastAPI Backend
-```
+![Architecture](docs/architecture.png)
 
 ## 수집 데이터
 
