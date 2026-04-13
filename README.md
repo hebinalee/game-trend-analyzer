@@ -51,6 +51,16 @@ docker-compose up --build
 
 ![Architecture](docs/architecture.png)
 
+## 샘플 리포트
+
+[`reports/`](./reports/) 폴더에 실제 실행 결과 리포트가 포함되어 있습니다.
+
+| 날짜 | 링크 |
+|------|------|
+| 2026-04-11 | [렌더링된 페이지로 보기 →](https://htmlpreview.github.io/?https://github.com/hebinalee/game-trend-analyzer/blob/master/reports/steam-trend-2026-04-11.html) |
+
+> 새 리포트는 `scripts/generate_report.py` 실행 시 `reports/steam-trend-YYYY-MM-DD.html` 형식으로 자동 저장됩니다.
+
 ## 수집 데이터
 
 | 유형 | 출처 | 내용 |
