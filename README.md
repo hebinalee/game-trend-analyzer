@@ -57,7 +57,7 @@ docker-compose up --build
 
 | 날짜 | 링크 |
 |------|------|
-| 2026-04-11 | [렌더링된 페이지로 보기 →](https://htmlpreview.github.io/?https://github.com/hebinalee/game-trend-analyzer/blob/master/reports/steam-trend-2026-04-11.html) |
+| 2026-04-11 | [렌더링된 페이지로 보기 →](https://raw.githack.com/hebinalee/game-trend-analyzer/master/reports/steam-trend-2026-04-11.html) |
 
 > 새 리포트는 `scripts/generate_report.py` 실행 시 `reports/steam-trend-YYYY-MM-DD.html` 형식으로 자동 저장됩니다.
 
