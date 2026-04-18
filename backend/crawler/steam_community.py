@@ -15,6 +15,7 @@ from sqlalchemy import select
 from models.game import Game
 from models.post import Post
 from crawler.utils import random_delay, clean_text
+from storage.file_store import save_posts
 
 logger = logging.getLogger(__name__)
 
@@ -110,15 +111,32 @@ async def crawl_game(game: Game, days_back: int = 1) -> list[dict]:
 
 async def crawl_all_games(db_session: AsyncSession) -> None:
     """
-    DB의 모든 active 게임에 대해 crawl_game을 순차 실행하고 DB에 저장한다.
+    DB의 모든 active 게임에 대해 crawl_game을 순차 실행하고
+    로컬 파일 및 DB에 저장한다.
+    파일 저장은 DB 저장보다 먼저 수행되어 DB 장애 시에도 데이터를 보존한다.
     """
+    from datetime import date as date_type
     result = await db_session.execute(select(Game).where(Game.is_active == True))
     games = result.scalars().all()
+    today = date_type.today()
 
     for game in games:
         try:
             posts_data = await crawl_game(game, days_back=1)
 
+            # 1. 파일 저장 (DB 저장 전에 수행 — 장애 안전망)
+            if posts_data:
+                crawled_at = datetime.now(timezone.utc)
+                file_records = [
+                    {**p, "crawled_at": crawled_at, "app_id": game.app_id}
+                    for p in posts_data
+                ]
+                try:
+                    save_posts(today, game.app_id, file_records)
+                except Exception as fe:
+                    logger.warning(f"[{game.name}] 파일 저장 실패 (DB 저장 계속): {fe}")
+
+            # 2. DB 저장
             for post_dict in posts_data:
                 existing = await db_session.execute(
                     select(Post).where(Post.post_id == post_dict["post_id"])

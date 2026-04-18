@@ -14,6 +14,7 @@ from config import settings
 from models.game import Game
 from models.post import Post
 from models.report import Report
+from storage.file_store import save_analysis
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +93,8 @@ async def analyze_game_posts(game: Game, posts: list[Post]) -> dict:
 
 async def analyze_all_games(db_session: AsyncSession) -> None:
     """
-    모든 active 게임에 대해 오늘 날짜 리포트를 생성하고 DB에 저장한다 (upsert).
+    모든 active 게임에 대해 오늘 날짜 리포트를 생성하고
+    로컬 파일 및 DB에 저장한다 (upsert).
     """
     today = date.today()
     yesterday = today - timedelta(days=1)
@@ -120,6 +122,12 @@ async def analyze_all_games(db_session: AsyncSession) -> None:
 
             logger.info(f"[{game.name}] {len(posts)}개 게시글 분석 시작")
             analysis = await analyze_game_posts(game, posts)
+
+            # 파일 저장 (DB 저장 전)
+            try:
+                save_analysis(today, game.app_id, game.name, analysis, len(posts))
+            except Exception as fe:
+                logger.warning(f"[{game.name}] 분석 파일 저장 실패 (DB 저장 계속): {fe}")
 
             # Upsert
             stmt = pg_insert(Report).values(

@@ -14,6 +14,8 @@ from crawler.steam_community import crawl_all_games
 from analyzer.llm_analyzer import analyze_all_games
 from detector.anomaly_detector import detect_all_games
 from notifier.slack_notifier import send_alert
+from storage.db_sync import sync_date_to_db, sync_all_to_db
+from storage.file_store import data_summary
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -79,6 +81,40 @@ async def trigger_detect(background_tasks: BackgroundTasks):
 
     background_tasks.add_task(_run)
     return {"message": "이상 감지가 시작되었습니다."}
+
+
+@app.get("/api/admin/data-summary", tags=["admin"])
+async def get_data_summary():
+    """로컬 파일 저장 현황 조회."""
+    return data_summary()
+
+
+@app.post("/api/admin/trigger-sync", tags=["admin"])
+async def trigger_sync(background_tasks: BackgroundTasks, target_date: str | None = None):
+    """파일 → DB 동기화 트리거. target_date 미지정 시 오늘 날짜."""
+    from datetime import date
+
+    async def _run():
+        async with async_session() as session:
+            if target_date:
+                d = date.fromisoformat(target_date)
+                await sync_date_to_db(session, d)
+            else:
+                await sync_date_to_db(session, date.today())
+
+    background_tasks.add_task(_run)
+    return {"message": f"DB 동기화가 시작되었습니다. (날짜: {target_date or '오늘'})"}
+
+
+@app.post("/api/admin/trigger-sync-all", tags=["admin"])
+async def trigger_sync_all(background_tasks: BackgroundTasks):
+    """로컬에 저장된 모든 날짜 데이터를 DB에 동기화."""
+    async def _run():
+        async with async_session() as session:
+            await sync_all_to_db(session)
+
+    background_tasks.add_task(_run)
+    return {"message": "전체 DB 동기화가 시작되었습니다."}
 
 
 @app.post("/api/admin/trigger-notify/{alert_id}", tags=["admin"])

@@ -18,6 +18,7 @@ from crawler.steam_community import crawl_all_games
 from analyzer.llm_analyzer import analyze_all_games
 from detector.anomaly_detector import detect_all_games
 from notifier.slack_notifier import retry_failed_notifications
+from storage.db_sync import sync_date_to_db
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +55,15 @@ async def _retry_notify_task():
         await retry_failed_notifications(session)
 
 
+async def _db_sync_task():
+    """오늘 날짜 파일을 DB에 동기화 (분석 완료 후 1시간 뒤 실행)."""
+    from datetime import date
+    async with async_session() as session:
+        today = date.today()
+        result = await sync_date_to_db(session, today)
+        logger.info(f"DB 동기화 완료: {result}")
+
+
 def start_scheduler():
     # 크롤링: 매 N시간
     scheduler.add_job(
@@ -76,6 +86,14 @@ def start_scheduler():
         _retry_notify_task,
         trigger=IntervalTrigger(hours=1),
         id="retry_notify_job",
+        replace_existing=True,
+    )
+
+    # 파일 → DB 동기화: 매일 오전 8시 (분석 완료 1시간 후)
+    scheduler.add_job(
+        _db_sync_task,
+        trigger=CronTrigger(hour=8, minute=0, timezone="Asia/Seoul"),
+        id="db_sync_job",
         replace_existing=True,
     )
 
