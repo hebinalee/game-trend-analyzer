@@ -25,3 +25,15 @@ export const compareGames = (gameIds, date) =>
 export const triggerCrawl = () => api.post('/admin/trigger-crawl').then(r => r.data)
 
 export const triggerAnalyze = () => api.post('/admin/trigger-analyze').then(r => r.data)
+
+export const getAlerts = (params = {}) =>
+  api.get('/alerts', { params }).then(r => r.data)
+
+export const getAlertDetail = (alertId) =>
+  api.get(`/alerts/${alertId}`).then(r => r.data)
+
+export const updateAlertStatus = (alertId, status) =>
+  api.patch(`/alerts/${alertId}/status`, { status }).then(r => r.data)
+
+export const getAlertsUnreadCount = () =>
+  api.get('/alerts/unread-count').then(r => r.data)

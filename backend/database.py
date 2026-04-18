@@ -43,6 +43,7 @@ SEED_GAMES = [
 
 async def init_db():
     from models.game import Game
+    from models import alert  # noqa: F401 — Alert 테이블 생성을 위해 임포트
     from sqlalchemy import select
 
     async with engine.begin() as conn:

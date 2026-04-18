@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getDashboardSummary, triggerCrawl, triggerAnalyze } from '../api.js'
+import { getDashboardSummary, triggerCrawl, triggerAnalyze, getAlerts } from '../api.js'
 import ReportCard from '../components/ReportCard.jsx'
 
 function Skeleton() {
@@ -19,6 +19,7 @@ function Skeleton() {
 
 export default function Dashboard() {
   const [items, setItems] = useState([])
+  const [alertsByGame, setAlertsByGame] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
@@ -27,9 +28,22 @@ export default function Dashboard() {
   const load = () => {
     setLoading(true)
     setError(null)
-    getDashboardSummary()
-      .then(data => {
-        setItems(data)
+    Promise.all([
+      getDashboardSummary(),
+      getAlerts({ status: 'new', limit: 100 }),
+    ])
+      .then(([summary, alerts]) => {
+        setItems(summary)
+        // game_id → 최고 severity 매핑 (CRITICAL > WARNING > INFO)
+        const severityRank = { CRITICAL: 2, WARNING: 1, INFO: 0 }
+        const map = {}
+        alerts.forEach(a => {
+          const cur = map[a.game_id]
+          if (!cur || severityRank[a.severity] > severityRank[cur]) {
+            map[a.game_id] = a.severity
+          }
+        })
+        setAlertsByGame(map)
         setLastUpdate(new Date().toLocaleString('ko-KR'))
       })
       .catch(() => setError('데이터를 불러오지 못했습니다.'))
@@ -88,6 +102,7 @@ export default function Dashboard() {
               key={item.game_id}
               game={{ id: item.game_id, name: item.game_name, thumbnail_url: item.thumbnail_url }}
               report={item.summary ? item : null}
+              alertSeverity={alertsByGame[item.game_id] || null}
               onClick={() => navigate(`/game/${item.game_id}`)}
             />
           ))
