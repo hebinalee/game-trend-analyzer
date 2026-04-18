@@ -1,17 +1,30 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, Link, useNavigate } from 'react-router-dom'
+import { Routes, Route, Link } from 'react-router-dom'
 import Dashboard from './pages/Dashboard.jsx'
 import GameDetail from './pages/GameDetail.jsx'
 import Compare from './pages/Compare.jsx'
+import Alerts from './pages/Alerts.jsx'
+import { getAlertsUnreadCount } from './api.js'
 
 export default function App() {
   const [dark, setDark] = useState(() =>
     window.matchMedia('(prefers-color-scheme: dark)').matches
   )
+  const [criticalCount, setCriticalCount] = useState(0)
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
   }, [dark])
+
+  useEffect(() => {
+    const fetchCount = () =>
+      getAlertsUnreadCount()
+        .then(data => setCriticalCount(data.critical))
+        .catch(() => {})
+    fetchCount()
+    const timer = setInterval(fetchCount, 60000) // 1분마다 갱신
+    return () => clearInterval(timer)
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -26,6 +39,14 @@ export default function App() {
             </Link>
             <Link to="/compare" className="text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400">
               비교
+            </Link>
+            <Link to="/alerts" className="relative text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400">
+              이슈
+              {criticalCount > 0 && (
+                <span className="absolute -top-1.5 -right-3.5 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {criticalCount}
+                </span>
+              )}
             </Link>
             <button
               onClick={() => setDark(d => !d)}
@@ -42,6 +63,7 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/game/:id" element={<GameDetail />} />
           <Route path="/compare" element={<Compare />} />
+          <Route path="/alerts" element={<Alerts />} />
         </Routes>
       </main>
     </div>

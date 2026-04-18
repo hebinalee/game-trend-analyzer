@@ -1,4 +1,9 @@
-export default function ReportCard({ game, report, onClick }) {
+const ALERT_DOT = {
+  CRITICAL: 'bg-red-500',
+  WARNING: 'bg-yellow-400',
+}
+
+export default function ReportCard({ game, report, alertSeverity, onClick }) {
   const sentiment = report?.sentiment || {}
   const pos = Math.round((sentiment.positive || 0) * 100)
   const neg = Math.round((sentiment.negative || 0) * 100)
@@ -7,8 +12,14 @@ export default function ReportCard({ game, report, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 cursor-pointer hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500 transition-all"
+      className="relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 cursor-pointer hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500 transition-all"
     >
+      {alertSeverity && ALERT_DOT[alertSeverity] && (
+        <span
+          className={`absolute top-3 right-3 w-2.5 h-2.5 rounded-full ${ALERT_DOT[alertSeverity]}`}
+          title={`${alertSeverity} 이슈 감지`}
+        />
+      )}
       <div className="flex items-center gap-3 mb-3">
         {game.thumbnail_url ? (
           <img

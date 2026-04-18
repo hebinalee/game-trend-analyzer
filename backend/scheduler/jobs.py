@@ -16,6 +16,8 @@ from config import settings
 from database import async_session
 from crawler.steam_community import crawl_all_games
 from analyzer.llm_analyzer import analyze_all_games
+from detector.anomaly_detector import detect_all_games
+from notifier.slack_notifier import retry_failed_notifications
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +30,12 @@ async def _crawl_task():
         await crawl_all_games(session)
         logger.info("스케줄 크롤링 완료")
 
+    # 크롤링 완료 후 즉시 이상 감지 실행
+    async with async_session() as session:
+        logger.info("이상 감지 시작")
+        alerts = await detect_all_games(session)
+        logger.info(f"이상 감지 완료: {len(alerts)}개 Alert 생성")
+
 
 async def _analyze_task():
     async with async_session() as session:
@@ -39,6 +47,11 @@ async def _analyze_task():
 async def _initial_crawl():
     await asyncio.sleep(60)
     await _crawl_task()
+
+
+async def _retry_notify_task():
+    async with async_session() as session:
+        await retry_failed_notifications(session)
 
 
 def start_scheduler():
@@ -55,6 +68,14 @@ def start_scheduler():
         _analyze_task,
         trigger=CronTrigger(hour=7, minute=0, timezone="Asia/Seoul"),
         id="analyze_job",
+        replace_existing=True,
+    )
+
+    # 미전송 알림 재시도: 매 1시간
+    scheduler.add_job(
+        _retry_notify_task,
+        trigger=IntervalTrigger(hours=1),
+        id="retry_notify_job",
         replace_existing=True,
     )
 

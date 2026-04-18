@@ -6,6 +6,8 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     crawl_interval_hours: int = 6
     analyze_interval_hours: int = 24
+    slack_webhook_url: str = ""          # 미설정 시 알림 비활성화
+    dashboard_url: str = "http://localhost:3000"
 
     class Config:
         env_file = ".env"
