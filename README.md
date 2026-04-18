@@ -55,11 +55,13 @@ docker-compose up --build
 
 [`reports/`](./reports/) 폴더에 실제 실행 결과 리포트가 포함되어 있습니다.
 
-| 날짜 | 링크 |
-|------|------|
-| 2026-04-11 | [렌더링된 페이지로 보기 →](https://raw.githack.com/hebinalee/game-trend-analyzer/master/reports/steam-trend-2026-04-11.html) |
+| 날짜 | 종류 | 링크 |
+|------|------|------|
+| 2026-04-11 | 동향 리포트 | [렌더링된 페이지로 보기 →](https://raw.githack.com/hebinalee/game-trend-analyzer/master/reports/steam-trend-2026-04-11.html) |
+| 2026-04-15 | Team Agent POC | [렌더링된 페이지로 보기 →](https://raw.githack.com/hebinalee/game-trend-analyzer/master/reports/poc-pipeline-2026-04-15.html) |
 
-> 새 리포트는 `scripts/generate_report.py` 실행 시 `reports/steam-trend-YYYY-MM-DD.html` 형식으로 자동 저장됩니다.
+> - 동향 리포트: `scripts/generate_report.py` → `reports/steam-trend-YYYY-MM-DD.html`
+> - Team Agent POC: `scripts/poc_pipeline.py` → `reports/poc-pipeline-YYYY-MM-DD.html`
 
 ## 수집 데이터
 
