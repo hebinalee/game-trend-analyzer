@@ -145,7 +145,7 @@ async def crawl_game(game: dict, days_back: int = 2) -> CrawlResult:
         except Exception as e:
             return CrawlResult(game=game, posts=[], duration_ms=0, error=str(e))
 
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(2)
 
         # 뉴스
         try:
@@ -192,6 +192,36 @@ ANALYSIS_PROMPT = """Steam '{game_name}' 최근 데이터 {count}건:
   "trend_keywords": ["키워드1","키워드2","키워드3","키워드4","키워드5"]
 }}"""
 
+MAX_RETRIES = 3
+RETRY_DELAYS = [2, 5, 10]   # 재시도 간격 (초)
+
+async def _claude_call_with_retry(client, *, model, max_tokens, system, messages) -> str:
+    """
+    Claude API 호출 + 빈 응답 / JSON 파싱 실패 시 최대 MAX_RETRIES회 재시도.
+    모든 시도 실패 시 마지막 예외를 raise한다.
+    """
+    last_exc: Exception | None = None
+    for attempt in range(MAX_RETRIES):
+        try:
+            msg = await client.messages.create(
+                model=model,
+                max_tokens=max_tokens,
+                system=system,
+                messages=messages,
+            )
+            text = msg.content[0].text.strip() if msg.content else ""
+            if not text:
+                raise ValueError("Claude API 빈 응답")
+            return text
+        except Exception as e:
+            last_exc = e
+            if attempt < MAX_RETRIES - 1:
+                delay = RETRY_DELAYS[attempt]
+                print(f" (재시도 {attempt + 1}/{MAX_RETRIES - 1}, {delay}s 대기...)", end="", flush=True)
+                await asyncio.sleep(delay)
+    raise last_exc
+
+
 async def analyze_game(crawl: CrawlResult) -> AnalysisResult:
     t0 = time.monotonic()
     posts = crawl.posts
@@ -206,7 +236,8 @@ async def analyze_game(crawl: CrawlResult) -> AnalysisResult:
         lines.append("")
 
     client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
-    msg = await client.messages.create(
+    text = await _claude_call_with_retry(
+        client,
         model="claude-sonnet-4-5",
         max_tokens=1024,
         system=ANALYSIS_SYSTEM,
@@ -216,7 +247,6 @@ async def analyze_game(crawl: CrawlResult) -> AnalysisResult:
             posts_text="\n".join(lines),
         )}],
     )
-    text = msg.content[0].text.strip()
     analysis = extract_json(text)
 
     return AnalysisResult(
@@ -346,7 +376,8 @@ async def generate_recommendations(alert: Alert) -> None:
         for k, v in alert.detail.items()
     )
     client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
-    msg = await client.messages.create(
+    text = await _claude_call_with_retry(
+        client,
         model="claude-sonnet-4-5",
         max_tokens=1024,
         system=RECOMMEND_SYSTEM,
@@ -358,7 +389,6 @@ async def generate_recommendations(alert: Alert) -> None:
             detail_text=detail_text,
         )}],
     )
-    text = msg.content[0].text.strip()
     alert.recommendations = extract_json(text)
     alert.rec_duration_ms = int((time.monotonic() - t0) * 1000)
 
@@ -687,7 +717,7 @@ async def main():
         reviews = len([p for p in cr.posts if p.post_type == "review"])
         news    = len([p for p in cr.posts if p.post_type == "news"])
         print(f"리뷰 {reviews}건 / 뉴스 {news}건 ({fmt_ms(cr.duration_ms)})")
-        await asyncio.sleep(1)
+        await asyncio.sleep(3)
 
     stage1_ms = int((time.monotonic() - t0) * 1000)
     total_posts = sum(len(c.posts) for c in crawls)
