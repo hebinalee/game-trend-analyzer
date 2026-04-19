@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Team Agent POC — 2026-04-19</title>
+<style>
+  * { box-sizing:border-box;margin:0;padding:0 }
+  body { font-family:'Segoe UI',sans-serif;background:#0e1117;color:#c9d1d9;line-height:1.6 }
+  a { color:#58a6ff }
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<div style="background:#161b22;border-bottom:1px solid #30363d;padding:28px 36px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+    <h1 style="color:#e6edf3;font-size:1.7rem">🤖 Team Agent POC</h1>
+    <span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:3px 12px;font-size:0.82rem">End-to-End Pipeline</span>
+  </div>
+  <p style="color:#8b949e;font-size:0.9rem">
+    실행일: 2026-04-19 &nbsp;·&nbsp;
+    총 소요: 237.9s &nbsp;·&nbsp;
+    수집: 608건 &nbsp;·&nbsp;
+    분석 게임: 10종 &nbsp;·&nbsp;
+    감지된 이슈: <span style="color:#f85149;font-weight:700">CRITICAL 1</span> &nbsp;
+                 <span style="color:#d29922;font-weight:700">WARNING 0</span>
+  </p>
+</div>
+
+<!-- 파이프라인 실행 로그 -->
+<div style="max-width:900px;margin:28px auto 0;padding:0 36px">
+  <h2 style="color:#e6edf3;font-size:1.1rem;margin-bottom:14px">📋 파이프라인 실행 로그</h2>
+  <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:18px">
+    <table style="width:100%;border-collapse:collapse">
+        <tr>
+          <td style="padding:6px 12px 6px 0;color:#8b949e;font-size:0.83rem;white-space:nowrap">Stage 1 · Crawler</td>
+          <td style="padding:6px 12px 6px 0">✅</td>
+          <td style="padding:6px 12px 6px 0;color:#3fb950;font-size:0.83rem">10개 게임 크롤링 완료 — 총 608건 수집</td>
+          <td style="padding:6px 0;color:#8b949e;font-size:0.83rem;text-align:right">54.9s</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 12px 6px 0;color:#8b949e;font-size:0.83rem;white-space:nowrap">Stage 2 · LLM Analyzer</td>
+          <td style="padding:6px 12px 6px 0">✅</td>
+          <td style="padding:6px 12px 6px 0;color:#3fb950;font-size:0.83rem">10개 게임 분석 완료</td>
+          <td style="padding:6px 0;color:#8b949e;font-size:0.83rem;text-align:right">160.2s</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 12px 6px 0;color:#8b949e;font-size:0.83rem;white-space:nowrap">Stage 3 · Anomaly Detector</td>
+          <td style="padding:6px 12px 6px 0">✅</td>
+          <td style="padding:6px 12px 6px 0;color:#3fb950;font-size:0.83rem">Alert 1건 생성 (CRITICAL 1 / WARNING 0)</td>
+          <td style="padding:6px 0;color:#8b949e;font-size:0.83rem;text-align:right">4ms</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 12px 6px 0;color:#8b949e;font-size:0.83rem;white-space:nowrap">Stage 4 · Action Recommender</td>
+          <td style="padding:6px 12px 6px 0">✅</td>
+          <td style="padding:6px 12px 6px 0;color:#3fb950;font-size:0.83rem">1건 대응 방안 생성 완료</td>
+          <td style="padding:6px 0;color:#8b949e;font-size:0.83rem;text-align:right">22.3s</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 12px 6px 0;color:#8b949e;font-size:0.83rem;white-space:nowrap">Stage 5 · Slack Notifier</td>
+          <td style="padding:6px 12px 6px 0">✅</td>
+          <td style="padding:6px 12px 6px 0;color:#3fb950;font-size:0.83rem">전송 1건 성공 / 0건 실패</td>
+          <td style="padding:6px 0;color:#8b949e;font-size:0.83rem;text-align:right">439ms</td>
+        </tr></table>
+  </div>
+
+  <!-- 아키텍처 다이어그램 -->
+  <h2 style="color:#e6edf3;font-size:1.1rem;margin:28px 0 14px">🔗 트리거 체인</h2>
+  <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:18px;font-family:monospace;font-size:0.85rem;color:#adbac7;line-height:2">
+    Steam API &nbsp;──▶&nbsp; <span style="color:#58a6ff">Stage 1: Crawler</span> &nbsp;──▶&nbsp; Posts<br>
+    Posts &nbsp;──▶&nbsp; <span style="color:#3fb950">Stage 2: LLM Analyzer</span> &nbsp;──▶&nbsp; Report (sentiment / topics / issues)<br>
+    Posts &nbsp;──▶&nbsp; <span style="color:#d29922">Stage 3: Anomaly Detector</span> &nbsp;──▶&nbsp; Alert (CRITICAL / WARNING)<br>
+    Alert &nbsp;──▶&nbsp; <span style="color:#bc8cff">Stage 4: Action Recommender</span> &nbsp;──▶&nbsp; 부서별 대응 방안 (Claude API)<br>
+    Alert + Recs &nbsp;──▶&nbsp; <span style="color:#f85149">Stage 5: Slack Notifier</span> &nbsp;──▶&nbsp; Slack 채널 전송 (CRITICAL: Block Kit 풀포맷 / WARNING: 요약)
+  </div>
+</div>
+
+<!-- 게임별 결과 -->
+<div style="max-width:1600px;margin:28px auto;padding:0 36px;
+            columns:2 480px;column-gap:20px">
+  
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;break-inside:avoid">
+      <div style="display:flex;gap:14px;margin-bottom:14px;align-items:flex-start">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/730/header.jpg" style="width:120px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <div style="flex:1">
+          <h2 style="color:#e6edf3;font-size:1.05rem">Counter-Strike 2</h2>
+          <div style="color:#8b949e;font-size:0.78rem;margin-top:3px">
+            리뷰 60건 &nbsp;·&nbsp; 뉴스 1건 &nbsp;·&nbsp;
+            크롤 2.4s &nbsp;·&nbsp; 분석 16.9s
+          </div>
+        </div>
+      </div>
+      <p style="color:#adbac7;font-size:0.88rem;margin-bottom:14px;white-space:pre-line">전반적으로 긍정적 평가가 우세하나 실질적 피드백은 부족한 상황입니다. 대부분 짧은 감탄사나 단순 추천으로 구성되어 있으며, 다국적 유저층(러시아어, 중국어, 포르투갈어, 영어권)이 고르게 분포되어 있습니다. 핵심 불만사항으로 치터 문제, 안티치트 시스템의 간헐적 작동, Premier 모드 포인트 미지급 이슈가 언급되었습니다. 중국어권 유저는 프리미엄 계정(우선 계정) 구매와 스킨 직접 구매를 강력 권장하고 있으며, 일부 유저는 게임의 중독성과 정신건강 영향을 언급했습니다.</p>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:4px">
+        <div style="width:88%;background:#3fb950" title="긍정 88%"></div>
+        <div style="width:2%;background:#8b949e" title="중립 2%"></div>
+        <div style="width:10%;background:#f85149" title="부정 10%"></div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.78rem;margin-bottom:14px">
+        <span style="color:#3fb950">긍정 88%</span>
+        <span style="color:#8b949e">중립 2%</span>
+        <span style="color:#f85149">부정 10%</span>
+      </div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">핫토픽</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">치터 및 안티치트 시스템 불만 (시즌 중반 이후 작동 중단)</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">Premier 모드 포인트 미지급 버그</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">캐주얼 모드의 상대적 만족도 (커뮤니티 킥 기능)</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">프리미엄 계정 구매 필요성 (중국 커뮤니티)</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">게임 중독성 및 애증 관계</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">트렌드 키워드</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">치터</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">안티치트</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">Premier</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">프리미엄계정</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">캐주얼모드</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">주요 이슈</div><div style="margin-bottom:8px"><strong style="color:#f85149;font-size:0.82rem">🐛 버그</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>Premier 모드 포인트 미지급</li><li>스폰 지점에서 즉시 사망 (맵 밸런스 또는 버그)</li></ul></div><div style="margin-bottom:8px"><strong style="color:#3fb950;font-size:0.82rem">💡 요청사항</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>안티치트 시스템 상시 가동 및 개선</li><li>프리미엄/우선 계정 혜택 확대</li><li>치터 제재 강화</li></ul></div><div style="margin-bottom:8px"><strong style="color:#d29922;font-size:0.82rem">⚙️ 운영이슈</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>안티치트 시스템이 시즌 중반 이후 비활성화되는 문제</li><li>치터로 인한 게임 경험 저하 (특히 랭크 모드)</li><li>독성 커뮤니티 문화 (자살 권유 등 언어폭력)</li><li>케이스 오픈 및 스킨 도박 관련 유저 경고 필요</li></ul></div>
+      
+        <div style="margin-top:18px">
+          <div style="color:#8b949e;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">🔔 감지된 이슈 (1건)</div>
+          
+    <div style="background:#f8514933;border:1px solid #f85149;border-radius:10px;padding:18px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="background:#f85149;color:#fff;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:700">CRITICAL  [시뮬레이션]</span>
+        <span style="color:#8b949e;font-size:0.82rem">부정 리뷰 비율 급증</span>
+        <span style="color:#8b949e;font-size:0.78rem;margin-left:auto">추천 생성 22.3s</span>
+      </div>
+      <p style="color:#e6edf3;font-size:0.9rem;font-weight:600;margin-bottom:10px">[Counter-Strike 2] 부정 리뷰 비율 급증 (5% → 12%, +7%p) [시뮬레이션]</p>
+      <p style="color:#d29922;font-size:0.8rem;margin-bottom:8px">⚠ POC 시연: baseline은 DB 히스토리 대신 시뮬레이션 값 사용</p>
+      <table style="margin-bottom:14px"><tr><td style="color:#8b949e;padding:3px 12px 3px 0;font-size:0.82rem">baseline_negative_ratio</td><td style="color:#e6edf3;font-size:0.82rem">0.05</td></tr><tr><td style="color:#8b949e;padding:3px 12px 3px 0;font-size:0.82rem">current_negative_ratio</td><td style="color:#e6edf3;font-size:0.82rem">0.1167</td></tr><tr><td style="color:#8b949e;padding:3px 12px 3px 0;font-size:0.82rem">diff</td><td style="color:#e6edf3;font-size:0.82rem">0.0667</td></tr><tr><td style="color:#8b949e;padding:3px 12px 3px 0;font-size:0.82rem">current_reviews</td><td style="color:#e6edf3;font-size:0.82rem">60</td></tr><tr><td style="color:#8b949e;padding:3px 12px 3px 0;font-size:0.82rem">baseline_reviews</td><td style="color:#e6edf3;font-size:0.82rem">48</td></tr><tr><td style="color:#8b949e;padding:3px 12px 3px 0;font-size:0.82rem">window_hours</td><td style="color:#e6edf3;font-size:0.82rem">6</td></tr></table>
+      <div style="border-top:1px solid #30363d;padding-top:12px">
+        <div style="color:#8b949e;font-size:0.75rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px">부서별 대응 방안</div>
+        <p style="color:#adbac7;font-size:0.88rem;margin-bottom:12px;line-height:1.6">Counter-Strike 2의 부정 리뷰 비율이 6시간 내 5%→12%로 급증하여 CRITICAL 단계입니다. 최근 업데이트, 서버 불안정, 밸런스 이슈 등이 원인으로 추정됩니다. 각 부서는 즉각적인 모니터링과 커뮤니티 대응, 원인 파악 및 핫픽스 준비가 필요합니다.</p>
+        <div style="margin-bottom:10px">
+          <strong style="color:#58a6ff;font-size:0.8rem">CS팀</strong>
+          <ul style="padding-left:18px;margin-top:4px;color:#adbac7;font-size:0.85rem;line-height:1.7"><li>Steam 리뷰 및 공식 포럼/Discord 모니터링 강화하여 주요 불만 키워드(서버 렉, 핵/치터, 밸런스, 버그) 30분 단위 집계 후 실시간 리포트 작성</li><li>자주 제기되는 이슈에 대한 FAQ 및 임시 해결 방법(workaround) 긴급 배포 및 공식 채널에 핀 고정</li><li>유저 문의 대응 인력 2배 증원 및 24시간 대응 체제 전환, 부정 리뷰 작성자 대상 개별 사유 확인 및 피드백 수집</li></ul>
+        </div>
+        <div style="margin-bottom:10px">
+          <strong style="color:#3fb950;font-size:0.8rem">기획팀</strong>
+          <ul style="padding-left:18px;margin-top:4px;color:#adbac7;font-size:0.85rem;line-height:1.7"><li>최근 72시간 내 배포된 패치/업데이트 내역 긴급 검토하여 밸런스 조정, 신규 기능, 버그 발생 여부 크로스체크</li><li>서버 로그 분석 통해 매칭 대기시간, 연결 끊김, 핵 신고 증가율 등 정량 데이터 확보 후 우선순위 이슈 선정</li><li>핫픽스 패치 계획 수립(24~48시간 내) - 치명적 버그 수정, 밸런스 긴급 롤백, 안티치트 시스템 강화 포함</li></ul>
+        </div>
+        <div style="margin-bottom:10px">
+          <strong style="color:#d29922;font-size:0.8rem">마케팅팀</strong>
+          <ul style="padding-left:18px;margin-top:4px;color:#adbac7;font-size:0.85rem;line-height:1.7"><li>공식 SNS 및 Steam 게시판에 '현재 이슈 인지 및 조사 중' 공지 즉시 게시하여 투명한 커뮤니케이션 유지</li><li>인플루언서/스트리머 긴급 모니터링 - 주요 방송인들의 부정 피드백 파악 후 별도 소통 채널 가동</li><li>부정 리뷰 완화를 위한 단기 이벤트 준비(보상 지급, 경험치 부스트 등) 단, 근본 원인 해결 후 실행하여 역효과 방지</li></ul>
+        </div>
+        <div style="margin-bottom:10px">
+          <strong style="color:#bc8cff;font-size:0.8rem">사업팀</strong>
+          <ul style="padding-left:18px;margin-top:4px;color:#adbac7;font-size:0.85rem;line-height:1.7"><li>Valve(Steam) 파트너 매니저에게 긴급 상황 공유 및 리뷰 폭탄(review bombing) 여부 판단 요청, 필요시 예외 처리 협의</li><li>주요 e-스포츠 파트너 및 리그 운영사에 상황 브리핑하여 대회 일정 영향 최소화 방안 논의</li><li>일일 매출/동접자 데이터 실시간 모니터링 체계 구축, 비즈니스 임팩트 정량화하여 경영진 일일 리포트 제출</li></ul>
+        </div>
+      </div>
+    </div>
+        </div>
+    </div>
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;break-inside:avoid">
+      <div style="display:flex;gap:14px;margin-bottom:14px;align-items:flex-start">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/570/header.jpg" style="width:120px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <div style="flex:1">
+          <h2 style="color:#e6edf3;font-size:1.05rem">Dota 2</h2>
+          <div style="color:#8b949e;font-size:0.78rem;margin-top:3px">
+            리뷰 60건 &nbsp;·&nbsp; 뉴스 0건 &nbsp;·&nbsp;
+            크롤 2.3s &nbsp;·&nbsp; 분석 14.6s
+          </div>
+        </div>
+      </div>
+      <p style="color:#adbac7;font-size:0.88rem;margin-bottom:14px;white-space:pre-line">리뷰 50건 중 추천 32건(64%), 비추천 18건(36%)으로 전반적으로는 긍정적이나, 내용 분석 시 심각한 불만 상황. 러시아어 유저들의 자조적·풍자적 추천 리뷰가 다수이며, 실제로는 게임의 중독성과 스트레스를 표현. 매칭 시스템, 스머프 문제, 높은 진입장벽이 핵심 불만사항. 초보자와 저랭크 유저의 게임 접근성 문제가 심각하며, 커뮤니티 독성에 대한 언급 빈번.</p>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:4px">
+        <div style="width:25%;background:#3fb950" title="긍정 25%"></div>
+        <div style="width:25%;background:#8b949e" title="중립 25%"></div>
+        <div style="width:50%;background:#f85149" title="부정 50%"></div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.78rem;margin-bottom:14px">
+        <span style="color:#3fb950">긍정 25%</span>
+        <span style="color:#8b949e">중립 25%</span>
+        <span style="color:#f85149">부정 50%</span>
+      </div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">핫토픽</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">스머프(Smurf) 계정으로 인한 매칭 불균형</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">신규/저랭크 유저의 랭크 매칭 불가 문제</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">게임 난이도와 학습곡선의 가파름</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">독성 커뮤니티와 신고 시스템 불만</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">트렌드 키워드</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">스머프</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">매칭</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">중독성</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">스트레스</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">학습난이도</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">주요 이슈</div><div style="margin-bottom:8px"><strong style="color:#f85149;font-size:0.82rem">🐛 버그</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>매칭 시스템 오류 (저랭크 매칭 불가)</li><li>UI 문제 (ESC, TAB 키 미작동 언급)</li></ul></div><div style="margin-bottom:8px"><strong style="color:#3fb950;font-size:0.82rem">💡 요청사항</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>Dota 3 출시 요구</li><li>매칭 시스템 개선 필요</li><li>신규 유저 온보딩 개선</li><li>카메라 잠금 기능 추가</li></ul></div><div style="margin-bottom:8px"><strong style="color:#d29922;font-size:0.82rem">⚙️ 운영이슈</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>스머프 계정 단속 미흡</li><li>신고(Report) 시스템의 불공정성</li><li>행동 점수(Behavior Score) 시스템 문제</li><li>과도한 게임 밴 (2030년까지 밴 사례)</li><li>지역별 게임 환경 격차 (중국 유저 환경 불만)</li></ul></div>
+      
+    </div>
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;break-inside:avoid">
+      <div style="display:flex;gap:14px;margin-bottom:14px;align-items:flex-start">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/578080/header.jpg" style="width:120px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <div style="flex:1">
+          <h2 style="color:#e6edf3;font-size:1.05rem">PUBG: BATTLEGROUNDS</h2>
+          <div style="color:#8b949e;font-size:0.78rem;margin-top:3px">
+            리뷰 60건 &nbsp;·&nbsp; 뉴스 6건 &nbsp;·&nbsp;
+            크롤 2.7s &nbsp;·&nbsp; 분석 15.0s
+          </div>
+        </div>
+      </div>
+      <p style="color:#adbac7;font-size:0.88rem;margin-bottom:14px;white-space:pre-line">전체적으로 긍정 리뷰가 압도적이나 실질적 내용은 부족합니다. 중국어권 유저 비중이 매우 높으며, 핵심 불만사항은 '핵/치터 문제'와 '부당한 계정 제재'로 집중됩니다. 서버 품질과 최적화 문제도 지속 제기되고 있으며, 중국어권 유저들은 충전액에 따른 차별적 제재 운영을 강하게 비판하고 있습니다. 게임 자체의 재미는 인정받지만 운영 신뢰도에 심각한 문제가 있습니다.</p>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:4px">
+        <div style="width:76%;background:#3fb950" title="긍정 76%"></div>
+        <div style="width:10%;background:#8b949e" title="중립 10%"></div>
+        <div style="width:14%;background:#f85149" title="부정 14%"></div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.78rem;margin-bottom:14px">
+        <span style="color:#3fb950">긍정 76%</span>
+        <span style="color:#8b949e">중립 10%</span>
+        <span style="color:#f85149">부정 14%</span>
+      </div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">핫토픽</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">핵/치터 문제 심각 - 신고해도 24시간만 정지되고 영구 제재 없음</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">부당한 계정 제재 - 정상 플레이어가 이유 없이 밴당하는 사례 다수</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">충전액 기반 차별적 운영 의혹 - 과금 유저는 핵 사용해도 제재 약함</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">트렌드 키워드</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">핵/치터</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">계정제재/밴</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">서버품질</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">최적화</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">운영불신</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">주요 이슈</div><div style="margin-bottom:8px"><strong style="color:#f85149;font-size:0.82rem">🐛 버그</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>서버 안정성 문제 (중국어권 유저 다수 지적)</li><li>최적화 부족으로 PC 과열 문제</li></ul></div><div style="margin-bottom:8px"><strong style="color:#3fb950;font-size:0.82rem">💡 요청사항</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>핵 사용자 영구 제재 강화</li><li>공정한 제재 시스템 구축</li><li>서버 품질 개선</li></ul></div><div style="margin-bottom:8px"><strong style="color:#d29922;font-size:0.82rem">⚙️ 운영이슈</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>부당한 계정 제재 - 명확한 사유 없이 밴</li><li>핵 사용자 솜방망이 처벌 (24시간 정지)</li><li>충전액 기반 차별 제재 의혹</li><li>안티치트 시스템 오작동 (실력 좋으면 24시간 검토)</li></ul></div>
+      
+    </div>
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;break-inside:avoid">
+      <div style="display:flex;gap:14px;margin-bottom:14px;align-items:flex-start">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/header.jpg" style="width:120px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <div style="flex:1">
+          <h2 style="color:#e6edf3;font-size:1.05rem">Elden Ring</h2>
+          <div style="color:#8b949e;font-size:0.78rem;margin-top:3px">
+            리뷰 60건 &nbsp;·&nbsp; 뉴스 1건 &nbsp;·&nbsp;
+            크롤 2.5s &nbsp;·&nbsp; 분석 15.6s
+          </div>
+        </div>
+      </div>
+      <p style="color:#adbac7;font-size:0.88rem;margin-bottom:14px;white-space:pre-line">Elden Ring은 압도적인 긍정 평가를 유지하며 '역대 최고의 게임'이라는 찬사를 받고 있습니다. 다국어 유저들이 활발히 참여 중이며, 특히 중국어권과 러시아어권 유저 비중이 높습니다. 높은 난이도에 대한 양면적 반응이 공존하며, Godskin Duo와 Maliketh 등 특정 보스에 대한 불만이 지속적으로 제기되고 있습니다. DLC '황금수 그림자'까지 포함한 장기 콘텐츠 소비가 활발하며, 4년차 접어든 시점에도 신규 유저 유입이 계속되고 있습니다.</p>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:4px">
+        <div style="width:92%;background:#3fb950" title="긍정 92%"></div>
+        <div style="width:4%;background:#8b949e" title="중립 4%"></div>
+        <div style="width:4%;background:#f85149" title="부정 4%"></div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.78rem;margin-bottom:14px">
+        <span style="color:#3fb950">긍정 92%</span>
+        <span style="color:#8b949e">중립 4%</span>
+        <span style="color:#f85149">부정 4%</span>
+      </div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">핫토픽</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">Godskin Duo 보스 난이도 논란</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">첫 소울 게임 경험담 및 추천</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">DLC 황금수 그림자 고평가</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">빌드 다양성과 사무라이 빌드 비판</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">역대 최고 게임(GOAT) 평가</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">트렌드 키워드</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">masterpiece</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">Godskin Duo</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">first souls game</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">DLC</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">난이도</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">boss</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">빌드</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">platinum</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">maidenless</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">GOTY</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">주요 이슈</div><div style="margin-bottom:8px"><strong style="color:#f85149;font-size:0.82rem">🐛 버그</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>대형 보스 전투 시 시야각(카메라) 제한 문제</li><li>일부 유저의 게임 작동 불안정 보고</li></ul></div><div style="margin-bottom:8px"><strong style="color:#3fb950;font-size:0.82rem">💡 요청사항</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>보스 밸런스 조정 요청 (Godskin Duo, Maliketh)</li><li>PvP 밸런스 개선 요청</li><li>사무라이 빌드 데미지 버프 요청</li></ul></div><div style="margin-bottom:8px"><strong style="color:#d29922;font-size:0.82rem">⚙️ 운영이슈</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>다국어 커뮤니티 관리 필요 (러시아어, 중국어, 포르투갈어, 태국어 등)</li><li>난이도 가이드 콘텐츠 부족으로 인한 초보자 이탈 위험</li><li>특정 보스 난이도로 인한 부정 리뷰 전환 가능성</li></ul></div>
+      
+    </div>
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;break-inside:avoid">
+      <div style="display:flex;gap:14px;margin-bottom:14px;align-items:flex-start">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/1086940/header.jpg" style="width:120px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <div style="flex:1">
+          <h2 style="color:#e6edf3;font-size:1.05rem">Baldur's Gate 3</h2>
+          <div style="color:#8b949e;font-size:0.78rem;margin-top:3px">
+            리뷰 60건 &nbsp;·&nbsp; 뉴스 0건 &nbsp;·&nbsp;
+            크롤 2.6s &nbsp;·&nbsp; 분석 17.6s
+          </div>
+        </div>
+      </div>
+      <p style="color:#adbac7;font-size:0.88rem;margin-bottom:14px;white-space:pre-line">Baldur's Gate 3는 압도적인 긍정 평가를 받고 있으며, 'RPG 신작', '올해의 게임' 등 극찬이 쏟아지고 있습니다. 유저들은 200시간 이상의 방대한 플레이타임, 수작업으로 제작된 콘텐츠, 뛰어난 스토리와 캐릭터 커스터마이징을 높이 평가합니다. D&D 룰 기반의 전투 시스템과 높은 자유도가 핵심 매력으로 작용하며, 멀티플레이 협동 플레이도 인기입니다. 소수 부정 리뷰는 기술적 문제(크래시, 오디오 버그)와 게임 메커니즘 이해 부족(서약 파괴 등)에 집중되어 있습니다.</p>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:4px">
+        <div style="width:94%;background:#3fb950" title="긍정 94%"></div>
+        <div style="width:0%;background:#8b949e" title="중립 0%"></div>
+        <div style="width:6%;background:#f85149" title="부정 6%"></div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.78rem;margin-bottom:14px">
+        <span style="color:#3fb950">긍정 94%</span>
+        <span style="color:#8b949e">중립 0%</span>
+        <span style="color:#f85149">부정 6%</span>
+      </div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">핫토픽</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">RPG 명작/올해의 게임 찬사</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">200~600시간 이상 장시간 플레이 경험담</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">친구/배우자와 함께하는 멀티플레이 협동 경험</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">D&D 룰 기반 전투 시스템과 높은 자유도</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">Larian Studios 전작(Divinity Original Sin 2) 연계 구매</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">트렌드 키워드</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">RPG신작</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">D&D</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">멀티플레이협동</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">200시간이상플레이타임</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">캐릭터커스터마이징</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">Larian</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">턴제전투</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">스토리텔링</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">자유도</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">리플레이성</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">주요 이슈</div><div style="margin-bottom:8px"><strong style="color:#f85149;font-size:0.82rem">🐛 버그</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>게임 런처 크래시 및 컴퓨터 다운 문제</li><li>오디오 크래클링(audio crackling) 현象</li><li>그래픽 렉/프레임 저하</li><li>튜토리얼 구간에서 데스 루프 발생</li></ul></div><div style="margin-bottom:8px"><strong style="color:#3fb950;font-size:0.82rem">💡 요청사항</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>Act 3(3장) 콘텐츠 완성도 개선 요청</li><li>팔라딘 서약(Oath) 파괴 메커니즘 사전 경고 강화</li><li>초보자를 위한 게임 메커니즘 튜토리얼 보강</li></ul></div><div style="margin-bottom:8px"><strong style="color:#d29922;font-size:0.82rem">⚙️ 운영이슈</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>신규/복귀 유저의 초기 진입 장벽 관리 필요</li><li>기술적 문제로 인한 환불 요청 리스크</li><li>멀티플레이 세션 안정성 모니터링 필요</li><li>중국어/러시아어/포르투갈어권 유저 커뮤니티 활성화</li></ul></div>
+      
+    </div>
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;break-inside:avoid">
+      <div style="display:flex;gap:14px;margin-bottom:14px;align-items:flex-start">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/252490/header.jpg" style="width:120px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <div style="flex:1">
+          <h2 style="color:#e6edf3;font-size:1.05rem">Rust</h2>
+          <div style="color:#8b949e;font-size:0.78rem;margin-top:3px">
+            리뷰 60건 &nbsp;·&nbsp; 뉴스 0건 &nbsp;·&nbsp;
+            크롤 2.4s &nbsp;·&nbsp; 분석 17.4s
+          </div>
+        </div>
+      </div>
+      <p style="color:#adbac7;font-size:0.88rem;margin-bottom:14px;white-space:pre-line">Rust는 극도로 중독성 강한 하드코어 PvP 서버바이벌 게임으로 평가받고 있습니다. 유저들은 '추천'하면서도 동시에 고통스럽다고 표현하는 모순적 반응을 보이며, 이는 게임의 독특한 매력을 보여줍니다. 치터 문제, 최적화 이슈, 솔로 플레이어의 어려움이 주요 불만사항으로 지적되고 있습니다. PvE 전용 서버 요구와 오토터렛 밸런스 문제가 운영 개선 포인트로 부각되고 있습니다.</p>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:4px">
+        <div style="width:74%;background:#3fb950" title="긍정 74%"></div>
+        <div style="width:8%;background:#8b949e" title="중립 8%"></div>
+        <div style="width:18%;background:#f85149" title="부정 18%"></div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.78rem;margin-bottom:14px">
+        <span style="color:#3fb950">긍정 74%</span>
+        <span style="color:#8b949e">중립 8%</span>
+        <span style="color:#f85149">부정 18%</span>
+      </div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">핫토픽</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">극단적 중독성과 시간 투자 요구 (직업/인생 포기 수준)</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">독성 커뮤니티와 PvP 스트레스 (오프라인 레이드, 초보자 학살)</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">치터 만연과 공식 서버 오반 문제</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">트렌드 키워드</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">중독성</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">치터</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">독성/toxic</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">오프라인 레이드</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">솔로 플레이</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">하드코어 PvP</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">시간 투자</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">오토터렛</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">서버 최적화</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">PvE</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">주요 이슈</div><div style="margin-bottom:8px"><strong style="color:#f85149;font-size:0.82rem">🐛 버그</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>게임 크래시 및 불안정성</li><li>서버 접속 시 렉 발생</li><li>공식 서버 오판으로 인한 계정 차단</li></ul></div><div style="margin-bottom:8px"><strong style="color:#3fb950;font-size:0.82rem">💡 요청사항</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>PvE 전용 서버 모드 추가 (솔로 플레이어 보호)</li><li>오토터렛 너프 (사거리 및 정확도 과도)</li><li>월 구독료 없이 즐길 수 있는 오프라인/싱글 모드</li><li>레이드 밸런스 조정 (방어 비용 대비 공격 비용 불균형)</li></ul></div><div style="margin-bottom:8px"><strong style="color:#d29922;font-size:0.82rem">⚙️ 운영이슈</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>치터 근절 시스템 강화 필요 (특히 공식 서버)</li><li>서버 최적화 부족 (FPS 드롭 심각)</li><li>솔로/신규 유저 진입장벽 완화 방안 필요</li><li>안티치트 오탐지로 인한 정당한 유저 차단 문제</li></ul></div>
+      
+    </div>
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;break-inside:avoid">
+      <div style="display:flex;gap:14px;margin-bottom:14px;align-items:flex-start">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/header.jpg" style="width:120px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <div style="flex:1">
+          <h2 style="color:#e6edf3;font-size:1.05rem">Cyberpunk 2077</h2>
+          <div style="color:#8b949e;font-size:0.78rem;margin-top:3px">
+            리뷰 60건 &nbsp;·&nbsp; 뉴스 0건 &nbsp;·&nbsp;
+            크롤 2.6s &nbsp;·&nbsp; 분석 19.4s
+          </div>
+        </div>
+      </div>
+      <p style="color:#adbac7;font-size:0.88rem;margin-bottom:14px;white-space:pre-line">Cyberpunk 2077은 초기 참담한 출시 이후 2.0 업데이트와 DLC '팬텀 리버티'를 통해 완벽한 역전에 성공했다는 평가가 지배적입니다. 유저들은 스토리, 캐릭터, 몰입감, 세계관을 극찬하며 '개방형 세계의 교과서'로 평가하고 있습니다. 애니메이션 '엣지러너'가 게임 재평가에 큰 역할을 했으며, 다회차 플레이를 유도하는 강력한 서사가 핵심 경쟁력으로 작용하고 있습니다. 다만 일부 성능 최적화 문제와 산발적인 버그가 여전히 보고되고 있어 지속적인 기술 지원이 필요한 상황입니다.</p>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:4px">
+        <div style="width:92%;background:#3fb950" title="긍정 92%"></div>
+        <div style="width:0%;background:#8b949e" title="중립 0%"></div>
+        <div style="width:8%;background:#f85149" title="부정 8%"></div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.78rem;margin-bottom:14px">
+        <span style="color:#3fb950">긍정 92%</span>
+        <span style="color:#8b949e">중립 0%</span>
+        <span style="color:#f85149">부정 8%</span>
+      </div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">핫토픽</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">초기 실패에서 완전판으로의 극적인 역전 성공</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">애니메이션 엣지러너의 시너지 효과로 게임 재조명</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">팬텀 리버티 DLC와 2.0 업데이트의 압도적 호평</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">강력한 스토리와 캐릭터로 인한 다회차 플레이 유도</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">2026년 현재까지도 신규 유저 유입 지속</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">트렌드 키워드</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">팬텀리버티</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">엣지러너</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">2.0업데이트</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">개방세계</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">스토리</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">캐릭터몰입</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">다회차플레이</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">역전성공</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">최적화</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">후속작기대</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">주요 이슈</div><div style="margin-bottom:8px"><strong style="color:#f85149;font-size:0.82rem">🐛 버그</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>로딩 중 크래시 발생 (읽기 오류)</li><li>특정 미션에서 무기 사라짐/복구 안됨 버그</li><li>일부 지역에서 프레임 드롭 발생</li><li>게임 크래시 4~5회 보고 (고사양 PC에서도)</li></ul></div><div style="margin-bottom:8px"><strong style="color:#3fb950;font-size:0.82rem">💡 요청사항</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>후속작 개발 강력 요청 (매출 지원 의사 명확)</li><li>지속적인 성능 최적화 요구</li><li>현재 완전판 상태 유지 및 추가 콘텐츠 기대</li></ul></div><div style="margin-bottom:8px"><strong style="color:#d29922;font-size:0.82rem">⚙️ 운영이슈</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>2026년에도 성능 이슈 잔존으로 일부 유저 불만</li><li>고사양 요구로 인한 긴 로딩 타임 문제</li><li>3D 멀미 유발 (설정 조정으로 개선 가능)</li><li>난이도 부족 지적 (너무 쉬움)</li></ul></div>
+      
+    </div>
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;break-inside:avoid">
+      <div style="display:flex;gap:14px;margin-bottom:14px;align-items:flex-start">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/892970/header.jpg" style="width:120px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <div style="flex:1">
+          <h2 style="color:#e6edf3;font-size:1.05rem">Valheim</h2>
+          <div style="color:#8b949e;font-size:0.78rem;margin-top:3px">
+            리뷰 60건 &nbsp;·&nbsp; 뉴스 0건 &nbsp;·&nbsp;
+            크롤 2.4s &nbsp;·&nbsp; 분석 14.5s
+          </div>
+        </div>
+      </div>
+      <p style="color:#adbac7;font-size:0.88rem;margin-bottom:14px;white-space:pre-line">전체적으로 긍정 평가가 우세하나 후반 콘텐츠(Mistlands, Ashlands)에 대한 강한 불만이 감지됩니다. 멀티플레이 환경에서의 재미는 높게 평가되지만, 솔로 플레이어의 난이도 불만과 접속/네트워크 문제가 지속적으로 제기되고 있습니다. 개발 속도 지연과 최적화 문제도 주요 비판 포인트로 나타나며, 모드 커뮤니티 활성화가 게임 수명을 연장하는 요소로 작용하고 있습니다.</p>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:4px">
+        <div style="width:74%;background:#3fb950" title="긍정 74%"></div>
+        <div style="width:10%;background:#8b949e" title="중립 10%"></div>
+        <div style="width:16%;background:#f85149" title="부정 16%"></div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.78rem;margin-bottom:14px">
+        <span style="color:#3fb950">긍정 74%</span>
+        <span style="color:#8b949e">중립 10%</span>
+        <span style="color:#f85149">부정 16%</span>
+      </div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">핫토픽</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">Ashlands/Mistlands 후반 콘텐츠 난이도 과다 및 재미 저하</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">솔로 플레이 난이도 불균형 문제</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">멀티플레이 접속/네트워크 안정성 이슈</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">개발 속도 지연 및 콘텐츠 업데이트 불만</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">모드 활용을 통한 게임성 개선 트렌드</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">트렌드 키워드</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">Ashlands</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">Mistlands</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">multiplayer</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">solo difficulty</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">modding</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">optimization</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">progression</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">grinding</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">server lag</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">death penalty</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">주요 이슈</div><div style="margin-bottom:8px"><strong style="color:#f85149;font-size:0.82rem">🐛 버그</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>멀티플레이 접속 불안정 및 랙 발생</li><li>최적화 문제로 인한 성능 저하</li><li>아이템/장비 손실 버그 빈번</li></ul></div><div style="margin-bottom:8px"><strong style="color:#3fb950;font-size:0.82rem">💡 요청사항</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>Ashlands 스폰율 및 난이도 조정 필요</li><li>솔로 플레이 밸런스 개선 요청</li><li>빠른 이동 제한(광석류) 완화 요청</li><li>전용 서버 안정성 개선</li><li>안개/어둠 효과 조정 옵션 추가</li></ul></div><div style="margin-bottom:8px"><strong style="color:#d29922;font-size:0.82rem">⚙️ 운영이슈</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>후반 콘텐츠 진입장벽으로 인한 이탈 위험</li><li>개발 속도 지연에 대한 커뮤니티 불신 증가</li><li>멀티플레이 중심 설계로 솔로 유저 소외감</li><li>초반 콘텐츠와 후반 콘텐츠 품질 격차 심화</li></ul></div>
+      
+    </div>
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;break-inside:avoid">
+      <div style="display:flex;gap:14px;margin-bottom:14px;align-items:flex-start">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/105600/header.jpg" style="width:120px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <div style="flex:1">
+          <h2 style="color:#e6edf3;font-size:1.05rem">Terraria</h2>
+          <div style="color:#8b949e;font-size:0.78rem;margin-top:3px">
+            리뷰 60건 &nbsp;·&nbsp; 뉴스 0건 &nbsp;·&nbsp;
+            크롤 2.5s &nbsp;·&nbsp; 분석 13.6s
+          </div>
+        </div>
+      </div>
+      <p style="color:#adbac7;font-size:0.88rem;margin-bottom:14px;white-space:pre-line">Terraria는 압도적으로 긍정적인 평가를 받고 있으며, 특히 시간 가는 줄 모르고 몰입하게 되는 중독성이 핵심 특징으로 언급됩니다. 멀티플레이어 경험이 게임의 재미를 크게 향상시키며, 다양한 언어권(러시아어, 중국어, 스페인어, 포르투갈어 등) 커뮤니티가 활발하게 형성되어 있습니다. 일부 유저는 난이도와 그라인딩 요소에 대해 진입장벽을 느끼며, Minecraft와의 비교를 경계하는 의견이 있습니다. 전반적으로 장기 플레이 가치와 재방문성이 높게 평가받고 있습니다.</p>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:4px">
+        <div style="width:92%;background:#3fb950" title="긍정 92%"></div>
+        <div style="width:2%;background:#8b949e" title="중립 2%"></div>
+        <div style="width:6%;background:#f85149" title="부정 6%"></div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.78rem;margin-bottom:14px">
+        <span style="color:#3fb950">긍정 92%</span>
+        <span style="color:#8b949e">중립 2%</span>
+        <span style="color:#f85149">부정 6%</span>
+      </div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">핫토픽</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">극도의 시간 몰입성 (시간 가는 줄 모름, 3시간이 순식간에 지나감)</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">친구/멀티플레이어와 함께 할 때의 재미 극대화</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">Minecraft와의 차별화 및 고유 정체성</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">트렌드 키워드</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">시간몰입</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">멀티플레이어</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">중독성</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">보스전</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">그라인딩</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">주요 이슈</div><div style="margin-bottom:8px"><strong style="color:#3fb950;font-size:0.82rem">💡 요청사항</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>tModLoader 모드 지원 활용 권장</li><li>초보자를 위한 난이도 진입 가이드 필요</li></ul></div><div style="margin-bottom:8px"><strong style="color:#d29922;font-size:0.82rem">⚙️ 운영이슈</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>2D 횡스크롤 장르 비선호층의 낮은 유입 전환율</li><li>Minecraft 비교로 인한 잘못된 기대치 관리 필요</li><li>그라인딩 요소에 대한 일부 유저 피로감</li></ul></div>
+      
+    </div>
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;break-inside:avoid">
+      <div style="display:flex;gap:14px;margin-bottom:14px;align-items:flex-start">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/440/header.jpg" style="width:120px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <div style="flex:1">
+          <h2 style="color:#e6edf3;font-size:1.05rem">Team Fortress 2</h2>
+          <div style="color:#8b949e;font-size:0.78rem;margin-top:3px">
+            리뷰 60건 &nbsp;·&nbsp; 뉴스 0건 &nbsp;·&nbsp;
+            크롤 2.5s &nbsp;·&nbsp; 분석 15.7s
+          </div>
+        </div>
+      </div>
+      <p style="color:#adbac7;font-size:0.88rem;margin-bottom:14px;white-space:pre-line">Team Fortress 2는 압도적으로 긍정적인 평가를 받고 있으며, 유저들은 게임의 재미와 중독성을 강조하고 있습니다. 로켓점프, 스파이 백스탭 등 고유한 게임플레이 메커니즘이 여전히 높은 만족도를 제공하며, 다국어 커뮤니티가 활발하게 활동 중입니다. 일부 유저는 크레이트/도박 시스템과 스킬 격차 문제를 언급했으나, 전반적으로 '클래식 명작'으로서의 입지를 유지하고 있습니다. 무료 게임임에도 불구하고 아이템 획득 속도와 랜덤 크리티컬에 대한 불만이 소수 존재합니다.</p>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:4px">
+        <div style="width:98%;background:#3fb950" title="긍정 98%"></div>
+        <div style="width:0%;background:#8b949e" title="중립 0%"></div>
+        <div style="width:2%;background:#f85149" title="부정 2%"></div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.78rem;margin-bottom:14px">
+        <span style="color:#3fb950">긍정 98%</span>
+        <span style="color:#8b949e">중립 0%</span>
+        <span style="color:#f85149">부정 2%</span>
+      </div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">핫토픽</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">로켓점프 및 스파이 백스탭 등 특정 플레이 메커니즘의 중독성</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">크레이트/도박 시스템에 대한 유저 반응</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">다양한 언어권(러시아어, 스페인어, 터키어, 포르투갈어) 커뮤니티 활성화</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">랜덤 크리티컬 및 게임 밸런스 이슈</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">정서적 가치 및 추억의 게임으로서의 위상</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">트렌드 키워드</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">로켓점프</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">스파이</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">중독성</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">클래식</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">크레이트</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">랜덤크릿</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">무료게임</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">카오스</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">추억</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">도파민</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">주요 이슈</div><div style="margin-bottom:8px"><strong style="color:#f85149;font-size:0.82rem">🐛 버그</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>일부 유저의 렉/성능 문제 보고</li></ul></div><div style="margin-bottom:8px"><strong style="color:#3fb950;font-size:0.82rem">💡 요청사항</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>스파이 캐릭터 너프 요청</li><li>랜덤 크리티컬 시스템 개선 요구</li><li>아이템 획득 속도 개선 필요</li><li>팀 간 스킬 격차 매칭 개선</li></ul></div><div style="margin-bottom:8px"><strong style="color:#d29922;font-size:0.82rem">⚙️ 운영이슈</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>크레이트/도박 시스템에 대한 유저 몰입도가 높으나 일부 과몰입 우려</li><li>비속어 및 부적절한 리뷰 콘텐츠 관리 필요</li><li>신규 유저와 숙련 유저 간 스킬 격차로 인한 게임 경험 차이</li></ul></div>
+      
+    </div>
+</div>
+
+<div style="text-align:center;padding:24px;color:#8b949e;font-size:0.8rem;border-top:1px solid #30363d">
+  Game Trend Analyzer — Team Agent POC &nbsp;·&nbsp; Powered by Steam API + Anthropic Claude
+  &nbsp;·&nbsp; Agent A (Detector) + Agent C (Recommender) + Agent B (Notifier sim) + Agent D (UI)
+</div>
+
+</body>
+</html>

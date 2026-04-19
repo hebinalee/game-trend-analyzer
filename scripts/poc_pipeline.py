@@ -28,7 +28,8 @@ import anthropic
 from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent.parent / ".env")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+ANTHROPIC_API_KEY  = os.getenv("ANTHROPIC_API_KEY", "")
+SLACK_WEBHOOK_URL  = os.getenv("SLACK_WEBHOOK_URL", "")
 
 # ── 게임 목록 ─────────────────────────────────────────────────────────────────
 
@@ -144,7 +145,7 @@ async def crawl_game(game: dict, days_back: int = 2) -> CrawlResult:
         except Exception as e:
             return CrawlResult(game=game, posts=[], duration_ms=0, error=str(e))
 
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(2)
 
         # 뉴스
         try:
@@ -191,6 +192,36 @@ ANALYSIS_PROMPT = """Steam '{game_name}' 최근 데이터 {count}건:
   "trend_keywords": ["키워드1","키워드2","키워드3","키워드4","키워드5"]
 }}"""
 
+MAX_RETRIES = 3
+RETRY_DELAYS = [2, 5, 10]   # 재시도 간격 (초)
+
+async def _claude_call_with_retry(client, *, model, max_tokens, system, messages) -> str:
+    """
+    Claude API 호출 + 빈 응답 / JSON 파싱 실패 시 최대 MAX_RETRIES회 재시도.
+    모든 시도 실패 시 마지막 예외를 raise한다.
+    """
+    last_exc: Exception | None = None
+    for attempt in range(MAX_RETRIES):
+        try:
+            msg = await client.messages.create(
+                model=model,
+                max_tokens=max_tokens,
+                system=system,
+                messages=messages,
+            )
+            text = msg.content[0].text.strip() if msg.content else ""
+            if not text:
+                raise ValueError("Claude API 빈 응답")
+            return text
+        except Exception as e:
+            last_exc = e
+            if attempt < MAX_RETRIES - 1:
+                delay = RETRY_DELAYS[attempt]
+                print(f" (재시도 {attempt + 1}/{MAX_RETRIES - 1}, {delay}s 대기...)", end="", flush=True)
+                await asyncio.sleep(delay)
+    raise last_exc
+
+
 async def analyze_game(crawl: CrawlResult) -> AnalysisResult:
     t0 = time.monotonic()
     posts = crawl.posts
@@ -205,7 +236,8 @@ async def analyze_game(crawl: CrawlResult) -> AnalysisResult:
         lines.append("")
 
     client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
-    msg = await client.messages.create(
+    text = await _claude_call_with_retry(
+        client,
         model="claude-sonnet-4-5",
         max_tokens=1024,
         system=ANALYSIS_SYSTEM,
@@ -215,7 +247,6 @@ async def analyze_game(crawl: CrawlResult) -> AnalysisResult:
             posts_text="\n".join(lines),
         )}],
     )
-    text = msg.content[0].text.strip()
     analysis = extract_json(text)
 
     return AnalysisResult(
@@ -338,12 +369,6 @@ RECOMMEND_PROMPT = """게임: {game_name}
   "business":  ["사업팀 방안1","방안2","방안3"]
 }}"""
 
-ALERT_TYPE_KR = {
-    "sentiment_drop": "부정 리뷰 비율 급증",
-    "volume_spike":   "리뷰 볼륨 급증",
-    "keyword_alert":  "긴급 키워드 감지",
-}
-
 async def generate_recommendations(alert: Alert) -> None:
     t0 = time.monotonic()
     detail_text = "\n".join(
@@ -351,7 +376,8 @@ async def generate_recommendations(alert: Alert) -> None:
         for k, v in alert.detail.items()
     )
     client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
-    msg = await client.messages.create(
+    text = await _claude_call_with_retry(
+        client,
         model="claude-sonnet-4-5",
         max_tokens=1024,
         system=RECOMMEND_SYSTEM,
@@ -363,11 +389,82 @@ async def generate_recommendations(alert: Alert) -> None:
             detail_text=detail_text,
         )}],
     )
-    text = msg.content[0].text.strip()
     alert.recommendations = extract_json(text)
     alert.rec_duration_ms = int((time.monotonic() - t0) * 1000)
 
-# ── Stage 5: HTML 리포트 빌더 ─────────────────────────────────────────────────
+# ── Stage 5: Slack 알림 ───────────────────────────────────────────────────────
+
+ALERT_TYPE_KR = {
+    "sentiment_drop": "부정 리뷰 비율 급증",
+    "volume_spike":   "리뷰 볼륨 급증",
+    "keyword_alert":  "긴급 키워드 감지",
+}
+
+def _slack_blocks_critical(alert: Alert) -> list:
+    """CRITICAL 알림용 Block Kit — 지표 + 상위 1개 추천"""
+    recs = alert.recommendations or {}
+    top_rec = ""
+    for dept in ("cs", "planning", "marketing", "business"):
+        items = recs.get(dept, [])
+        if items:
+            dept_label = {"cs": "CS팀", "planning": "기획팀",
+                          "marketing": "마케팅팀", "business": "사업팀"}[dept]
+            top_rec = f"*{dept_label}* {items[0]}"
+            break
+
+    detail_lines = "\n".join(
+        f"• *{k}*: {', '.join(v) if isinstance(v, list) else v}"
+        for k, v in alert.detail.items() if k != "note"
+    )
+    sim_note = "  _(POC 시뮬레이션)_" if alert.simulated else ""
+
+    sim_suffix = " [시뮬레이션]" if alert.simulated else ""
+    return [
+        {"type": "header", "text": {"type": "plain_text",
+            "text": f"🚨 CRITICAL — {alert.game_name}{sim_suffix}"}},
+        {"type": "section", "text": {"type": "mrkdwn",
+            "text": f"*{alert.title}*{sim_note}\n_{ALERT_TYPE_KR.get(alert.alert_type, alert.alert_type)}_"}},
+        {"type": "section", "text": {"type": "mrkdwn", "text": detail_lines}},
+        {"type": "divider"},
+        {"type": "section", "text": {"type": "mrkdwn",
+            "text": f"*📋 요약*\n{recs.get('summary', '—')}"}},
+        *([ {"type": "section", "text": {"type": "mrkdwn",
+            "text": f"*💡 우선 대응*\n{top_rec}"}} ] if top_rec else []),
+        {"type": "context", "elements": [{"type": "mrkdwn",
+            "text": f"Game Trend Analyzer · POC Pipeline · {datetime.now().strftime('%Y-%m-%d %H:%M KST')}"}]},
+    ]
+
+def _slack_blocks_warning(alert: Alert) -> list:
+    """WARNING 알림용 Block Kit — 요약만"""
+    return [
+        {"type": "header", "text": {"type": "plain_text",
+            "text": f"⚠️ WARNING — {alert.game_name}"}},
+        {"type": "section", "text": {"type": "mrkdwn",
+            "text": f"*{alert.title}*\n_{ALERT_TYPE_KR.get(alert.alert_type, alert.alert_type)}_"}},
+        {"type": "context", "elements": [{"type": "mrkdwn",
+            "text": f"Game Trend Analyzer · POC Pipeline · {datetime.now().strftime('%Y-%m-%d %H:%M KST')}"}]},
+    ]
+
+async def send_slack_alert(alert: Alert) -> tuple[bool, str]:
+    """Slack Incoming Webhook으로 알림 전송. (성공여부, 에러메시지) 반환."""
+    if not SLACK_WEBHOOK_URL:
+        return False, "SLACK_WEBHOOK_URL 미설정"
+
+    blocks = (_slack_blocks_critical(alert) if alert.severity == "CRITICAL"
+              else _slack_blocks_warning(alert))
+    payload = {"blocks": blocks}
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(SLACK_WEBHOOK_URL, json=payload)
+            if resp.status_code == 200 and resp.text == "ok":
+                return True, ""
+            return False, f"HTTP {resp.status_code}: {resp.text}"
+    except Exception as e:
+        return False, str(e)
+
+
+# ── Stage 6: HTML 리포트 빌더 ─────────────────────────────────────────────────
 
 def fmt_ms(ms: int) -> str:
     return f"{ms/1000:.1f}s" if ms >= 1000 else f"{ms}ms"
@@ -576,7 +673,7 @@ def build_report(
     Posts &nbsp;──▶&nbsp; <span style="color:#3fb950">Stage 2: LLM Analyzer</span> &nbsp;──▶&nbsp; Report (sentiment / topics / issues)<br>
     Posts &nbsp;──▶&nbsp; <span style="color:#d29922">Stage 3: Anomaly Detector</span> &nbsp;──▶&nbsp; Alert (CRITICAL / WARNING)<br>
     Alert &nbsp;──▶&nbsp; <span style="color:#bc8cff">Stage 4: Action Recommender</span> &nbsp;──▶&nbsp; 부서별 대응 방안 (Claude API)<br>
-    Alert + Recs &nbsp;──▶&nbsp; <span style="color:#f85149">Stage 5: Slack Notifier</span> &nbsp;──▶&nbsp; [POC: 실행 스킵, 실제 서비스에서 전송]
+    Alert + Recs &nbsp;──▶&nbsp; <span style="color:#f85149">Stage 5: Slack Notifier</span> &nbsp;──▶&nbsp; Slack 채널 전송 (CRITICAL: Block Kit 풀포맷 / WARNING: 요약)
   </div>
 </div>
 
@@ -620,7 +717,7 @@ async def main():
         reviews = len([p for p in cr.posts if p.post_type == "review"])
         news    = len([p for p in cr.posts if p.post_type == "news"])
         print(f"리뷰 {reviews}건 / 뉴스 {news}건 ({fmt_ms(cr.duration_ms)})")
-        await asyncio.sleep(1)
+        await asyncio.sleep(3)
 
     stage1_ms = int((time.monotonic() - t0) * 1000)
     total_posts = sum(len(c.posts) for c in crawls)
@@ -698,11 +795,28 @@ async def main():
                             f"{len(all_alerts)}건 대응 방안 생성 완료", stage4_ms))
     print(f"  → 완료 ({fmt_ms(stage4_ms)})\n")
 
-    # Stage 5: Slack (POC에서는 스킵)
-    print("▶ Stage 5: Slack 알림 (POC: 스킵)")
-    logs.append(PipelineLog("Stage 5 · Slack Notifier", "skip",
-                            "POC 환경 — SLACK_WEBHOOK_URL 미설정으로 스킵 (실제 서비스에서 자동 전송)"))
-    print("  → 스킵 (SLACK_WEBHOOK_URL 미설정)\n")
+    # Stage 5: Slack 알림
+    print("▶ Stage 5: Slack 알림 전송")
+    t0 = time.monotonic()
+    slack_ok = slack_fail = 0
+    if not SLACK_WEBHOOK_URL:
+        logs.append(PipelineLog("Stage 5 · Slack Notifier", "skip",
+                                "SLACK_WEBHOOK_URL 미설정 — 스킵"))
+        print("  → 스킵 (SLACK_WEBHOOK_URL 미설정)\n")
+    else:
+        for al in all_alerts:
+            print(f"  [{al.severity}] {al.game_name} 알림 전송 중...", end=" ", flush=True)
+            ok, err = await send_slack_alert(al)
+            if ok:
+                slack_ok += 1
+                print("전송 완료 ✅")
+            else:
+                slack_fail += 1
+                print(f"실패 ❌ ({err})")
+        stage5_ms = int((time.monotonic() - t0) * 1000)
+        logs.append(PipelineLog("Stage 5 · Slack Notifier", "ok" if slack_fail == 0 else "error",
+                                f"전송 {slack_ok}건 성공 / {slack_fail}건 실패", stage5_ms))
+        print(f"  → 완료: {slack_ok}건 전송 ({fmt_ms(stage5_ms)})\n")
 
     # 리포트 생성
     print("▶ Stage 6: HTML 리포트 생성")
