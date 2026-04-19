@@ -47,7 +47,7 @@ docker-compose up --build
 | `POST /api/admin/trigger-crawl` | 수동 크롤링 트리거 |
 | `POST /api/admin/trigger-analyze` | 수동 분석 트리거 |
 
-## 아키텍처
+## 시스템 아키텍처
 
 ![Architecture](docs/architecture.png)
 
