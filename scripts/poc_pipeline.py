@@ -14,6 +14,7 @@ DB 없이 독립 실행 가능한 End-to-End 데모.
   실제 서비스에서는 DB에 저장된 이전 크롤링 데이터와 비교합니다.
 """
 
+import argparse
 import asyncio
 import json
 import os
@@ -45,6 +46,96 @@ STEAM_GAMES = [
     {"name": "Terraria",            "app_id": "105600"},
     {"name": "Team Fortress 2",     "app_id": "440"},
 ]
+
+# ── 장르별 인기 게임 큐레이션 ──────────────────────────────────────────────────
+# Steam 장르 키 기준. 지정 게임과 같은 장르에서 유사 게임을 선택할 때 사용.
+
+GENRE_GAME_MAP: dict[str, list[dict]] = {
+    "Action": [
+        {"name": "Hades",                        "app_id": "1145360"},
+        {"name": "Sekiro: Shadows Die Twice",     "app_id": "814380"},
+        {"name": "Deep Rock Galactic",            "app_id": "548430"},
+        {"name": "Monster Hunter: World",         "app_id": "582010"},
+        {"name": "Devil May Cry 5",               "app_id": "601150"},
+        {"name": "Hollow Knight",                 "app_id": "367520"},
+    ],
+    "RPG": [
+        {"name": "Baldur's Gate 3",               "app_id": "1086940"},
+        {"name": "Divinity: Original Sin 2",      "app_id": "435150"},
+        {"name": "Dark Souls III",                "app_id": "374320"},
+        {"name": "The Witcher 3: Wild Hunt",      "app_id": "292030"},
+        {"name": "Cyberpunk 2077",                "app_id": "1091500"},
+        {"name": "Elden Ring",                    "app_id": "1245620"},
+    ],
+    "Strategy": [
+        {"name": "Civilization VI",               "app_id": "289070"},
+        {"name": "XCOM 2",                        "app_id": "268500"},
+        {"name": "Crusader Kings III",            "app_id": "1158310"},
+        {"name": "Total War: WARHAMMER III",      "app_id": "1142710"},
+        {"name": "Age of Empires IV",             "app_id": "1466860"},
+        {"name": "Stellaris",                     "app_id": "281990"},
+    ],
+    "Simulation": [
+        {"name": "Stardew Valley",                "app_id": "413150"},
+        {"name": "Cities: Skylines",              "app_id": "255710"},
+        {"name": "Planet Zoo",                    "app_id": "703080"},
+        {"name": "Kerbal Space Program 2",        "app_id": "954850"},
+        {"name": "Two Point Campus",              "app_id": "1649080"},
+        {"name": "Farming Simulator 22",          "app_id": "1248130"},
+    ],
+    "Indie": [
+        {"name": "Celeste",                       "app_id": "504230"},
+        {"name": "Hades",                         "app_id": "1145360"},
+        {"name": "Undertale",                     "app_id": "391540"},
+        {"name": "Cuphead",                       "app_id": "268910"},
+        {"name": "Vampire Survivors",             "app_id": "1794680"},
+        {"name": "Hollow Knight",                 "app_id": "367520"},
+    ],
+    "Adventure": [
+        {"name": "It Takes Two",                  "app_id": "1426210"},
+        {"name": "Disco Elysium",                 "app_id": "632470"},
+        {"name": "A Plague Tale: Requiem",        "app_id": "1182480"},
+        {"name": "Firewatch",                     "app_id": "383870"},
+        {"name": "Life is Strange: True Colors",  "app_id": "936790"},
+        {"name": "What Remains of Edith Finch",   "app_id": "501300"},
+    ],
+    "Free to Play": [
+        {"name": "Apex Legends",                  "app_id": "1172470"},
+        {"name": "Path of Exile",                 "app_id": "238960"},
+        {"name": "Warframe",                      "app_id": "230410"},
+        {"name": "Lost Ark",                      "app_id": "1599340"},
+        {"name": "Genshin Impact",                "app_id": "1971870"},
+        {"name": "Dota 2",                        "app_id": "570"},
+    ],
+    "Massively Multiplayer": [
+        {"name": "Lost Ark",                      "app_id": "1599340"},
+        {"name": "New World: Aeternum",           "app_id": "1063730"},
+        {"name": "Guild Wars 2",                  "app_id": "39210"},
+        {"name": "Path of Exile",                 "app_id": "238960"},
+        {"name": "Warframe",                      "app_id": "230410"},
+    ],
+    "Sports": [
+        {"name": "Rocket League",                 "app_id": "252950"},
+        {"name": "Football Manager 2024",         "app_id": "2252570"},
+        {"name": "EA SPORTS FC 24",               "app_id": "2195250"},
+        {"name": "NBA 2K24",                      "app_id": "2338770"},
+        {"name": "F1 23",                         "app_id": "2108330"},
+    ],
+    "Racing": [
+        {"name": "Forza Horizon 5",               "app_id": "1551360"},
+        {"name": "Assetto Corsa Competizione",    "app_id": "805550"},
+        {"name": "F1 23",                         "app_id": "2108330"},
+        {"name": "DiRT Rally 2.0",                "app_id": "690790"},
+        {"name": "Rocket League",                 "app_id": "252950"},
+    ],
+    "Casual": [
+        {"name": "Stardew Valley",                "app_id": "413150"},
+        {"name": "PowerWash Simulator",           "app_id": "1290000"},
+        {"name": "Unpacking",                     "app_id": "1135690"},
+        {"name": "Vampire Survivors",             "app_id": "1794680"},
+        {"name": "Goose Goose Duck",              "app_id": "1568590"},
+    ],
+}
 
 # ── 데이터 컨테이너 ───────────────────────────────────────────────────────────
 
@@ -88,6 +179,80 @@ class PipelineLog:
     message: str
     duration_ms: int = 0
 
+# ── 게임 검색 & 유사 게임 탐색 ────────────────────────────────────────────────
+
+async def search_steam_game(query: str) -> list[dict]:
+    """Steam Store Search API로 게임 검색 (퍼지 매칭 지원)."""
+    async with httpx.AsyncClient(timeout=15) as client:
+        resp = await client.get(
+            "https://store.steampowered.com/api/storesearch/",
+            params={"term": query, "l": "english", "cc": "US"},
+        )
+        resp.raise_for_status()
+        items = resp.json().get("items", [])
+        return [{"name": item["name"], "app_id": str(item["id"])} for item in items[:5]]
+
+
+async def get_game_genres(app_id: str) -> list[str]:
+    """Steam appdetails API로 장르 목록 반환."""
+    async with httpx.AsyncClient(timeout=15) as client:
+        resp = await client.get(
+            "https://store.steampowered.com/api/appdetails",
+            params={"appids": app_id, "filters": "genres"},
+        )
+        resp.raise_for_status()
+        data = resp.json().get(app_id, {})
+        if not data.get("success"):
+            return []
+        return [g["description"] for g in data.get("data", {}).get("genres", [])]
+
+
+def get_similar_games(primary_app_id: str, genres: list[str], limit: int = 4) -> list[dict]:
+    """장르 기반 큐레이션에서 primary 게임을 제외한 유사 게임 반환."""
+    seen = {primary_app_id}
+    candidates: list[dict] = []
+    for genre in genres:
+        for game in GENRE_GAME_MAP.get(genre, []):
+            if game["app_id"] not in seen:
+                seen.add(game["app_id"])
+                candidates.append(game)
+    # 장르 매칭이 없으면 Action 기본값
+    if not candidates:
+        for game in GENRE_GAME_MAP.get("Action", []):
+            if game["app_id"] not in seen:
+                candidates.append(game)
+    return candidates[:limit]
+
+
+async def resolve_game_list(query: str) -> tuple[list[dict], str | None]:
+    """
+    --game 인수를 받아 (게임 목록, primary_app_id) 반환.
+    검색 결과 1위를 primary로 확정하고 유사 게임 4개를 추가한다.
+    """
+    print(f"\n  Steam 검색: '{query}'")
+    candidates = await search_steam_game(query)
+    if not candidates:
+        print("  검색 결과 없음 — top 10 모드로 전환")
+        return STEAM_GAMES, None
+
+    primary = candidates[0]
+    print(f"  선택된 게임: {primary['name']} (app_id={primary['app_id']})")
+
+    print(f"  장르 조회 중...", end=" ", flush=True)
+    genres = await get_game_genres(primary["app_id"])
+    print(f"{', '.join(genres) if genres else '장르 정보 없음'}")
+
+    similar = get_similar_games(primary["app_id"], genres, limit=4)
+    game_list = [primary] + similar
+
+    print(f"  분석 대상: {primary['name']} (메인) + 유사 게임 {len(similar)}종")
+    for g in similar:
+        print(f"    └ {g['name']} ({', '.join(genres[:2]) if genres else '-'})")
+    print()
+
+    return game_list, primary["app_id"]
+
+
 # ── Stage 1: 크롤링 ───────────────────────────────────────────────────────────
 
 def clean(text: str, limit: int = 400) -> str:
@@ -95,7 +260,7 @@ def clean(text: str, limit: int = 400) -> str:
     return re.sub(r"\s+", " ", text or "").strip()[:limit]
 
 def extract_json(text: str) -> dict:
-    """Claude 응답에서 JSON 객체를 추출한다. 코드블록·잡문자 방어."""
+    """Claude 응답에서 JSON 객체를 추출한다. 코드블록·잡문자·빈 블록 방어."""
     import re
     text = text.strip()
     # 코드블록 추출
@@ -104,8 +269,11 @@ def extract_json(text: str) -> dict:
         for part in parts[1::2]:
             if part.startswith("json"):
                 part = part[4:]
+            part = part.strip()
+            if not part:          # 빈 코드블록 방어
+                continue
             try:
-                return json.loads(part.strip())
+                return json.loads(part)
             except Exception:
                 pass
     # 중괄호 범위 추출
@@ -115,7 +283,7 @@ def extract_json(text: str) -> dict:
             return json.loads(match.group())
         except Exception:
             pass
-    # 직접 파싱
+    # 직접 파싱 (실패 시 JSONDecodeError를 호출자에게 전파)
     return json.loads(text)
 
 async def crawl_game(game: dict, days_back: int = 2) -> CrawlResult:
@@ -198,6 +366,7 @@ RETRY_DELAYS = [2, 5, 10]   # 재시도 간격 (초)
 async def _claude_call_with_retry(client, *, model, max_tokens, system, messages) -> str:
     """
     Claude API 호출 + 빈 응답 / JSON 파싱 실패 시 최대 MAX_RETRIES회 재시도.
+    JSON 파싱 검증까지 재시도 범위에 포함하여 파싱 실패도 재시도한다.
     모든 시도 실패 시 마지막 예외를 raise한다.
     """
     last_exc: Exception | None = None
@@ -212,6 +381,7 @@ async def _claude_call_with_retry(client, *, model, max_tokens, system, messages
             text = msg.content[0].text.strip() if msg.content else ""
             if not text:
                 raise ValueError("Claude API 빈 응답")
+            extract_json(text)   # JSON 파싱 가능 여부 검증 — 실패 시 재시도
             return text
         except Exception as e:
             last_exc = e
@@ -524,7 +694,7 @@ def alert_card_html(alert: Alert) -> str:
       </div>
     </div>'''
 
-def game_section_html(ar: AnalysisResult, cr: CrawlResult, alerts: list[Alert]) -> str:
+def game_section_html(ar: AnalysisResult, cr: CrawlResult, alerts: list[Alert], is_primary: bool = False) -> str:
     a = ar.analysis
     thumb = f"https://cdn.cloudflare.steamstatic.com/steam/apps/{ar.game['app_id']}/header.jpg"
     pos = int(a.get("sentiment", {}).get("positive", 0) * 100)
@@ -563,12 +733,19 @@ def game_section_html(ar: AnalysisResult, cr: CrawlResult, alerts: list[Alert]) 
           {"".join(alert_card_html(al) for al in alerts)}
         </div>'''
 
+    primary_badge = (
+        '<span style="background:#1f6feb;color:#fff;border-radius:8px;'
+        'padding:2px 10px;font-size:0.75rem;font-weight:700;margin-left:8px">★ 메인 게임</span>'
+        if is_primary else ""
+    )
+    border_style = "border:2px solid #1f6feb" if is_primary else "border:1px solid #30363d"
+
     return f'''
-    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;break-inside:avoid">
+    <div style="background:#161b22;{border_style};border-radius:10px;padding:20px;break-inside:avoid">
       <div style="display:flex;gap:14px;margin-bottom:14px;align-items:flex-start">
         <img src="{thumb}" style="width:120px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
         <div style="flex:1">
-          <h2 style="color:#e6edf3;font-size:1.05rem">{ar.game["name"]}</h2>
+          <h2 style="color:#e6edf3;font-size:1.05rem">{ar.game["name"]}{primary_badge}</h2>
           <div style="color:#8b949e;font-size:0.78rem;margin-top:3px">
             리뷰 {len(reviews)}건 &nbsp;·&nbsp; 뉴스 {len(news)}건 &nbsp;·&nbsp;
             크롤 {fmt_ms(cr.duration_ms)} &nbsp;·&nbsp; 분석 {fmt_ms(ar.duration_ms)}
@@ -615,19 +792,49 @@ def build_report(
     logs: list[PipelineLog],
     run_date: str,
     total_ms: int,
+    primary_app_id: str | None = None,
 ) -> str:
     all_alerts = [a for lst in alerts_by_game.values() for a in lst]
     critical_count = sum(1 for a in all_alerts if a.severity == "CRITICAL")
     warning_count  = sum(1 for a in all_alerts if a.severity == "WARNING")
     total_posts    = sum(len(c.posts) for c in crawls)
 
-    sections = ""
-    for ar in analyses:
+    # primary 게임을 최상단으로 정렬
+    sorted_analyses = sorted(
+        analyses,
+        key=lambda ar: (0 if ar.game["app_id"] == primary_app_id else 1),
+    )
+
+    primary_section = ""
+    similar_sections = ""
+    for ar in sorted_analyses:
         cr = next((c for c in crawls if c.game["app_id"] == ar.game["app_id"]), None)
         if not cr:
             continue
         game_alerts = alerts_by_game.get(ar.game["name"], [])
-        sections += game_section_html(ar, cr, game_alerts)
+        is_primary = (primary_app_id is not None and ar.game["app_id"] == primary_app_id)
+        html_block = game_section_html(ar, cr, game_alerts, is_primary=is_primary)
+        if is_primary:
+            primary_section = html_block
+        else:
+            similar_sections += html_block
+
+    # primary가 있으면 전폭 단독 배치, 유사 게임은 2단 그리드
+    if primary_app_id and primary_section:
+        sections = f'''
+        <div style="margin-bottom:20px">{primary_section}</div>
+        <div style="columns:2 480px;column-gap:20px">{similar_sections}</div>
+        '''
+    else:
+        sections = f'<div style="columns:2 480px;column-gap:20px">{similar_sections}</div>'
+
+    mode_badge = (
+        f'<span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;'
+        f'border-radius:12px;padding:3px 12px;font-size:0.82rem">Custom Game Mode</span>'
+        if primary_app_id else
+        f'<span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;'
+        f'border-radius:12px;padding:3px 12px;font-size:0.82rem">Top 10 Mode</span>'
+    )
 
     return f"""<!DOCTYPE html>
 <html lang="ko">
@@ -647,7 +854,8 @@ def build_report(
 <div style="background:#161b22;border-bottom:1px solid #30363d;padding:28px 36px">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
     <h1 style="color:#e6edf3;font-size:1.7rem">🤖 Team Agent POC</h1>
-    <span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:3px 12px;font-size:0.82rem">End-to-End Pipeline</span>
+    <span style="background:#238636;color:#fff;border-radius:12px;padding:3px 12px;font-size:0.82rem">End-to-End Pipeline</span>
+    {mode_badge}
   </div>
   <p style="color:#8b949e;font-size:0.9rem">
     실행일: {run_date} &nbsp;·&nbsp;
@@ -678,8 +886,7 @@ def build_report(
 </div>
 
 <!-- 게임별 결과 -->
-<div style="max-width:1600px;margin:28px auto;padding:0 36px;
-            columns:2 480px;column-gap:20px">
+<div style="max-width:1600px;margin:28px auto;padding:0 36px">
   {sections}
 </div>
 
@@ -694,6 +901,11 @@ def build_report(
 # ── main ──────────────────────────────────────────────────────────────────────
 
 async def main():
+    parser = argparse.ArgumentParser(description="Game Trend Analyzer — POC Pipeline")
+    parser.add_argument("--game", type=str, default=None,
+                        help="분석할 게임 이름 (미지정 시 Steam Top 10 기본 실행)")
+    args = parser.parse_args()
+
     if not ANTHROPIC_API_KEY:
         print("ERROR: ANTHROPIC_API_KEY 미설정")
         sys.exit(1)
@@ -704,13 +916,22 @@ async def main():
 
     print(f"\n{'='*60}")
     print(f"  Team Agent POC — {run_date}")
-    print(f"{'='*60}\n")
+    print(f"{'='*60}")
+
+    # 게임 목록 결정
+    if args.game:
+        game_list, primary_app_id = await resolve_game_list(args.game)
+        logs.append(PipelineLog("Game Discovery", "ok",
+                                f"메인: {game_list[0]['name']} / 유사 게임 {len(game_list)-1}종"))
+    else:
+        game_list, primary_app_id = STEAM_GAMES, None
+        print(f"\n  모드: Top 10 기본 실행\n")
 
     # Stage 1: 크롤링
     print("▶ Stage 1: Steam API 크롤링")
     t0 = time.monotonic()
     crawls: list[CrawlResult] = []
-    for game in STEAM_GAMES:
+    for game in game_list:
         print(f"  [{game['name']}] 수집 중...", end=" ", flush=True)
         cr = await crawl_game(game)
         crawls.append(cr)
@@ -761,16 +982,17 @@ async def main():
             for al in detected:
                 print(f"  [{al.severity}] {al.game_name}: {al.alert_type}")
 
-    # CS2에 CRITICAL 시뮬레이션 주입 (POC 시연)
-    cs2_crawl = next((c for c in crawls if c.game["app_id"] == "730"), None)
-    cs2_analysis = next((a for a in analyses if a.game["app_id"] == "730"), None)
-    if cs2_crawl and cs2_analysis:
-        demo_alert = inject_demo_alert(cs2_crawl, cs2_analysis)
-        existing = alerts_by_game.get("Counter-Strike 2", [])
-        # 이미 같은 타입이 있으면 시뮬레이션으로 교체
+    # CRITICAL 시뮬레이션 주입 (POC 시연)
+    # 커스텀 모드: primary 게임 / 기본 모드: CS2
+    sim_app_id = primary_app_id if primary_app_id else "730"
+    sim_crawl    = next((c for c in crawls    if c.game["app_id"] == sim_app_id), None)
+    sim_analysis = next((a for a in analyses  if a.game["app_id"] == sim_app_id), None)
+    if sim_crawl and sim_analysis:
+        demo_alert = inject_demo_alert(sim_crawl, sim_analysis)
+        existing = alerts_by_game.get(sim_crawl.game["name"], [])
         existing = [a for a in existing if a.alert_type != "sentiment_drop"]
-        alerts_by_game["Counter-Strike 2"] = [demo_alert] + existing
-        print(f"  [CRITICAL 시뮬레이션] Counter-Strike 2: sentiment_drop (POC 데모)")
+        alerts_by_game[sim_crawl.game["name"]] = [demo_alert] + existing
+        print(f"  [CRITICAL 시뮬레이션] {sim_crawl.game['name']}: sentiment_drop (POC 데모)")
 
     all_alerts = [a for lst in alerts_by_game.values() for a in lst]
     stage3_ms = int((time.monotonic() - t0) * 1000)
@@ -821,11 +1043,19 @@ async def main():
     # 리포트 생성
     print("▶ Stage 6: HTML 리포트 생성")
     total_ms = int((time.monotonic() - t_total) * 1000)
-    html = build_report(crawls, analyses, alerts_by_game, logs, run_date, total_ms)
+    html = build_report(crawls, analyses, alerts_by_game, logs, run_date, total_ms,
+                        primary_app_id=primary_app_id)
 
     out_dir  = Path(__file__).parent.parent / "reports"
     out_dir.mkdir(exist_ok=True)
-    out_path = out_dir / f"poc-pipeline-{run_date}.html"
+    if primary_app_id and game_list:
+        # 게임 이름을 파일명에 사용 가능한 형태로 변환 (소문자, 공백→하이픈, 특수문자 제거)
+        import re
+        game_slug = re.sub(r"[^\w\s-]", "", game_list[0]["name"].lower())
+        game_slug = re.sub(r"\s+", "-", game_slug.strip())
+        out_path = out_dir / f"poc-pipeline-{run_date}-{game_slug}.html"
+    else:
+        out_path = out_dir / f"poc-pipeline-{run_date}.html"
     out_path.write_text(html, encoding="utf-8")
 
     print(f"\n{'='*60}")

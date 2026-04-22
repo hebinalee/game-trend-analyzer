@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Team Agent POC — 2026-04-19</title>
+<style>
+  * { box-sizing:border-box;margin:0;padding:0 }
+  body { font-family:'Segoe UI',sans-serif;background:#0e1117;color:#c9d1d9;line-height:1.6 }
+  a { color:#58a6ff }
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<div style="background:#161b22;border-bottom:1px solid #30363d;padding:28px 36px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+    <h1 style="color:#e6edf3;font-size:1.7rem">🤖 Team Agent POC</h1>
+    <span style="background:#238636;color:#fff;border-radius:12px;padding:3px 12px;font-size:0.82rem">End-to-End Pipeline</span>
+    <span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:3px 12px;font-size:0.82rem">Custom Game Mode</span>
+  </div>
+  <p style="color:#8b949e;font-size:0.9rem">
+    실행일: 2026-04-19 &nbsp;·&nbsp;
+    총 소요: 124.2s &nbsp;·&nbsp;
+    수집: 305건 &nbsp;·&nbsp;
+    분석 게임: 5종 &nbsp;·&nbsp;
+    감지된 이슈: <span style="color:#f85149;font-weight:700">CRITICAL 1</span> &nbsp;
+                 <span style="color:#d29922;font-weight:700">WARNING 0</span>
+  </p>
+</div>
+
+<!-- 파이프라인 실행 로그 -->
+<div style="max-width:900px;margin:28px auto 0;padding:0 36px">
+  <h2 style="color:#e6edf3;font-size:1.1rem;margin-bottom:14px">📋 파이프라인 실행 로그</h2>
+  <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:18px">
+    <table style="width:100%;border-collapse:collapse">
+        <tr>
+          <td style="padding:6px 12px 6px 0;color:#8b949e;font-size:0.83rem;white-space:nowrap">Game Discovery</td>
+          <td style="padding:6px 12px 6px 0">✅</td>
+          <td style="padding:6px 12px 6px 0;color:#3fb950;font-size:0.83rem">메인: Slay the Spire 2 / 유사 게임 4종</td>
+          <td style="padding:6px 0;color:#8b949e;font-size:0.83rem;text-align:right">-</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 12px 6px 0;color:#8b949e;font-size:0.83rem;white-space:nowrap">Stage 1 · Crawler</td>
+          <td style="padding:6px 12px 6px 0">✅</td>
+          <td style="padding:6px 12px 6px 0;color:#3fb950;font-size:0.83rem">5개 게임 크롤링 완료 — 총 305건 수집</td>
+          <td style="padding:6px 0;color:#8b949e;font-size:0.83rem;text-align:right">26.8s</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 12px 6px 0;color:#8b949e;font-size:0.83rem;white-space:nowrap">Stage 2 · LLM Analyzer</td>
+          <td style="padding:6px 12px 6px 0">✅</td>
+          <td style="padding:6px 12px 6px 0;color:#3fb950;font-size:0.83rem">5개 게임 분석 완료</td>
+          <td style="padding:6px 0;color:#8b949e;font-size:0.83rem;text-align:right">76.4s</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 12px 6px 0;color:#8b949e;font-size:0.83rem;white-space:nowrap">Stage 3 · Anomaly Detector</td>
+          <td style="padding:6px 12px 6px 0">✅</td>
+          <td style="padding:6px 12px 6px 0;color:#3fb950;font-size:0.83rem">Alert 1건 생성 (CRITICAL 1 / WARNING 0)</td>
+          <td style="padding:6px 0;color:#8b949e;font-size:0.83rem;text-align:right">5ms</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 12px 6px 0;color:#8b949e;font-size:0.83rem;white-space:nowrap">Stage 4 · Action Recommender</td>
+          <td style="padding:6px 12px 6px 0">✅</td>
+          <td style="padding:6px 12px 6px 0;color:#3fb950;font-size:0.83rem">1건 대응 방안 생성 완료</td>
+          <td style="padding:6px 0;color:#8b949e;font-size:0.83rem;text-align:right">20.1s</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 12px 6px 0;color:#8b949e;font-size:0.83rem;white-space:nowrap">Stage 5 · Slack Notifier</td>
+          <td style="padding:6px 12px 6px 0">✅</td>
+          <td style="padding:6px 12px 6px 0;color:#3fb950;font-size:0.83rem">전송 1건 성공 / 0건 실패</td>
+          <td style="padding:6px 0;color:#8b949e;font-size:0.83rem;text-align:right">407ms</td>
+        </tr></table>
+  </div>
+
+  <!-- 아키텍처 다이어그램 -->
+  <h2 style="color:#e6edf3;font-size:1.1rem;margin:28px 0 14px">🔗 트리거 체인</h2>
+  <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:18px;font-family:monospace;font-size:0.85rem;color:#adbac7;line-height:2">
+    Steam API &nbsp;──▶&nbsp; <span style="color:#58a6ff">Stage 1: Crawler</span> &nbsp;──▶&nbsp; Posts<br>
+    Posts &nbsp;──▶&nbsp; <span style="color:#3fb950">Stage 2: LLM Analyzer</span> &nbsp;──▶&nbsp; Report (sentiment / topics / issues)<br>
+    Posts &nbsp;──▶&nbsp; <span style="color:#d29922">Stage 3: Anomaly Detector</span> &nbsp;──▶&nbsp; Alert (CRITICAL / WARNING)<br>
+    Alert &nbsp;──▶&nbsp; <span style="color:#bc8cff">Stage 4: Action Recommender</span> &nbsp;──▶&nbsp; 부서별 대응 방안 (Claude API)<br>
+    Alert + Recs &nbsp;──▶&nbsp; <span style="color:#f85149">Stage 5: Slack Notifier</span> &nbsp;──▶&nbsp; Slack 채널 전송 (CRITICAL: Block Kit 풀포맷 / WARNING: 요약)
+  </div>
+</div>
+
+<!-- 게임별 결과 -->
+<div style="max-width:1600px;margin:28px auto;padding:0 36px">
+  
+        <div style="margin-bottom:20px">
+    <div style="background:#161b22;border:2px solid #1f6feb;border-radius:10px;padding:20px;break-inside:avoid">
+      <div style="display:flex;gap:14px;margin-bottom:14px;align-items:flex-start">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/2868840/header.jpg" style="width:120px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <div style="flex:1">
+          <h2 style="color:#e6edf3;font-size:1.05rem">Slay the Spire 2<span style="background:#1f6feb;color:#fff;border-radius:8px;padding:2px 10px;font-size:0.75rem;font-weight:700;margin-left:8px">★ 메인 게임</span></h2>
+          <div style="color:#8b949e;font-size:0.78rem;margin-top:3px">
+            리뷰 60건 &nbsp;·&nbsp; 뉴스 5건 &nbsp;·&nbsp;
+            크롤 2.3s &nbsp;·&nbsp; 분석 20.8s
+          </div>
+        </div>
+      </div>
+      <p style="color:#adbac7;font-size:0.88rem;margin-bottom:14px;white-space:pre-line">최근 업데이트 이후 압도적인 부정 리뷰 급증. 특히 최종 보스 '門扉(문비)' 난이도 조정으로 커뮤니티 강한 반발. 중국어권 유저들이 제작자 '안토니(Anthony)'를 직접 비판하며 고난이도(進階10/Ascension 10) 밸런스 문제 제기. '무한 카드 덱' 플레이 스타일 약화로 캐주얼 유저층 이탈 우려. EA 단계임에도 피드백 무시 및 강제 실장에 대한 불만 집중.</p>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:4px">
+        <div style="width:16%;background:#3fb950" title="긍정 16%"></div>
+        <div style="width:6%;background:#8b949e" title="중립 6%"></div>
+        <div style="width:78%;background:#f85149" title="부정 78%"></div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.78rem;margin-bottom:14px">
+        <span style="color:#3fb950">긍정 16%</span>
+        <span style="color:#8b949e">중립 6%</span>
+        <span style="color:#f85149">부정 78%</span>
+      </div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">핫토픽</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">門扉(문비) 보스 난이도 급상승 및 3단계 형태 밸런스 붕괴</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">무한 덱 빌드 너프로 인한 플레이 스타일 강제 변경</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">고진계(Ascension 10) 난이도 조정 실패 - 특히 猎宝(헌터) 캐릭터</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">개발진의 플레이어 피드백 무시 및 베타 테스트 강제 실장</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">협동 모드(2~3인) 난이도 과도 상향</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">트렌드 키워드</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">門扉(문비/최종보스)</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">安东尼(Anthony/제작자)</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">进阶10(Ascension 10)</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">无限卡组(무한덱)</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">猎宝(헌터캐릭터)</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">주요 이슈</div><div style="margin-bottom:8px"><strong style="color:#f85149;font-size:0.82rem">🐛 버그</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>커스텀 모드 진행 후 보상 미지급</li><li>리뷰 작성/수정 시스템 오류 (일부 유저 신고)</li></ul></div><div style="margin-bottom:8px"><strong style="color:#3fb950;font-size:0.82rem">💡 요청사항</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>門扉 보스 체력/난이도 하향 조정 긴급 요청</li><li>무한 덱 메커니즘 복구 또는 균형 조정</li><li>협동 모드 별도 밸런싱 적용</li><li>고진계 난이도 재검토 (특히 猎宝 캐릭터)</li><li>杂技(Acrobatics) 카드 비용 변경(흰색→파란색) 되돌리기</li><li>石之剑 이벤트 선택지 조정</li><li>Knowledge Demon 보스 체력 너프</li><li>이벤트 카드 신규 타입 추가</li></ul></div><div style="margin-bottom:8px"><strong style="color:#d29922;font-size:0.82rem">⚙️ 운영이슈</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>베타 테스트 결과를 정식 버전에 강제 실장하여 커뮤니티 반발</li><li>개발진이 고난이도 콘텐츠 직접 플레이 경험 부족 지적</li><li>승률 기반 밸런싱으로 플레이어 선호 빌드 일방적 삭제</li><li>EA 기간 중 급격한 메타 변경으로 신뢰도 하락</li><li>중국어권 커뮤니티 집단 반발 - 제작자 개인 공격 수준 악화</li></ul></div>
+      
+        <div style="margin-top:18px">
+          <div style="color:#8b949e;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">🔔 감지된 이슈 (1건)</div>
+          
+    <div style="background:#f8514933;border:1px solid #f85149;border-radius:10px;padding:18px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="background:#f85149;color:#fff;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:700">CRITICAL  [시뮬레이션]</span>
+        <span style="color:#8b949e;font-size:0.82rem">부정 리뷰 비율 급증</span>
+        <span style="color:#8b949e;font-size:0.78rem;margin-left:auto">추천 생성 20.1s</span>
+      </div>
+      <p style="color:#e6edf3;font-size:0.9rem;font-weight:600;margin-bottom:10px">[Slay the Spire 2] 부정 리뷰 비율 급증 (48% → 83%, +35%p) [시뮬레이션]</p>
+      <p style="color:#d29922;font-size:0.8rem;margin-bottom:8px">⚠ POC 시연: baseline은 DB 히스토리 대신 시뮬레이션 값 사용</p>
+      <table style="margin-bottom:14px"><tr><td style="color:#8b949e;padding:3px 12px 3px 0;font-size:0.82rem">baseline_negative_ratio</td><td style="color:#e6edf3;font-size:0.82rem">0.4833</td></tr><tr><td style="color:#8b949e;padding:3px 12px 3px 0;font-size:0.82rem">current_negative_ratio</td><td style="color:#e6edf3;font-size:0.82rem">0.8333</td></tr><tr><td style="color:#8b949e;padding:3px 12px 3px 0;font-size:0.82rem">diff</td><td style="color:#e6edf3;font-size:0.82rem">0.35</td></tr><tr><td style="color:#8b949e;padding:3px 12px 3px 0;font-size:0.82rem">current_reviews</td><td style="color:#e6edf3;font-size:0.82rem">60</td></tr><tr><td style="color:#8b949e;padding:3px 12px 3px 0;font-size:0.82rem">baseline_reviews</td><td style="color:#e6edf3;font-size:0.82rem">48</td></tr><tr><td style="color:#8b949e;padding:3px 12px 3px 0;font-size:0.82rem">window_hours</td><td style="color:#e6edf3;font-size:0.82rem">6</td></tr></table>
+      <div style="border-top:1px solid #30363d;padding-top:12px">
+        <div style="color:#8b949e;font-size:0.75rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px">부서별 대응 방안</div>
+        <p style="color:#adbac7;font-size:0.88rem;margin-bottom:12px;line-height:1.6">Slay the Spire 2의 부정 리뷰가 6시간 내 48%→83%로 급증한 것은 최근 업데이트, 서버 장애, 또는 게임 밸런스 붕괴가 원인일 가능성이 높습니다. 즉각적인 유저 소통과 원인 파악, 그리고 긴급 핫픽스 준비가 필요합니다. 리뷰 트렌드 분석을 통해 구체적 불만 사항을 식별하고 48시간 내 대응 완료를 목표로 합니다.</p>
+        <div style="margin-bottom:10px">
+          <strong style="color:#58a6ff;font-size:0.8rem">CS팀</strong>
+          <ul style="padding-left:18px;margin-top:4px;color:#adbac7;font-size:0.85rem;line-height:1.7"><li>Steam 리뷰 및 커뮤니티에서 최근 6시간 내 부정 리뷰 키워드 긴급 분석 (버그, 밸런스, 서버, 과금 등) 후 1시간 내 경영진에게 리포트</li><li>공식 Discord 및 Steam 공지를 통해 이슈 인지 및 조사 중임을 즉시 알리고, 유저 피드백 집중 수집 채널 개설</li><li>반복 문의되는 주요 이슈(TOP 3)에 대한 임시 FAQ 및 워크어라운드 솔루션 2시간 내 배포</li></ul>
+        </div>
+        <div style="margin-bottom:10px">
+          <strong style="color:#3fb950;font-size:0.8rem">기획팀</strong>
+          <ul style="padding-left:18px;margin-top:4px;color:#adbac7;font-size:0.85rem;line-height:1.7"><li>최근 6시간 내 배포된 패치/업데이트 내역 긴급 검토 및 버그 재현 테스트 즉시 착수</li><li>부정 리뷰에서 가장 많이 언급된 게임플레이 이슈(밸런스, 진행 불가 버그 등) TOP 3 선정 후 핫픽스 우선순위 결정</li><li>긴급 밸런스 조정 또는 버그 수정 패치를 24시간 내 준비하고, 테스트 서버 검증 후 48시간 내 배포 계획 수립</li></ul>
+        </div>
+        <div style="margin-bottom:10px">
+          <strong style="color:#d29922;font-size:0.8rem">마케팅팀</strong>
+          <ul style="padding-left:18px;margin-top:4px;color:#adbac7;font-size:0.85rem;line-height:1.7"><li>Steam 스토어 페이지 및 공식 SNS 채널에 '이슈 인지 및 해결 진행 중' 공지 1시간 내 게시</li><li>주요 게임 미디어 및 인플루언서에게 상황 설명 및 업데이트 계획 사전 공유로 부정 여론 확산 방지</li><li>핫픽스 배포 시 '긴급 패치 노트' 및 '유저 피드백 반영 감사 메시지'를 포함한 커뮤니케이션 패키지 준비</li></ul>
+        </div>
+        <div style="margin-bottom:10px">
+          <strong style="color:#bc8cff;font-size:0.8rem">사업팀</strong>
+          <ul style="padding-left:18px;margin-top:4px;color:#adbac7;font-size:0.85rem;line-height:1.7"><li>Steam 환불 요청 추이 및 DAU/매출 변화 실시간 모니터링 대시보드 구축 (6시간 단위 업데이트)</li><li>부정 리뷰 급증이 매출에 미치는 영향 시뮬레이션 및 최악 시나리오 대응 예산 확보 (보상 아이템, 프로모션 등)</li><li>Valve(Steam)와 긴급 소통 채널 확보하여 스토어 노출 및 추천 알고리즘 영향 최소화 방안 협의</li></ul>
+        </div>
+      </div>
+    </div>
+        </div>
+    </div></div>
+        <div style="columns:2 480px;column-gap:20px">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;break-inside:avoid">
+      <div style="display:flex;gap:14px;margin-bottom:14px;align-items:flex-start">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/504230/header.jpg" style="width:120px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <div style="flex:1">
+          <h2 style="color:#e6edf3;font-size:1.05rem">Celeste</h2>
+          <div style="color:#8b949e;font-size:0.78rem;margin-top:3px">
+            리뷰 60건 &nbsp;·&nbsp; 뉴스 0건 &nbsp;·&nbsp;
+            크롤 2.3s &nbsp;·&nbsp; 분석 16.1s
+          </div>
+        </div>
+      </div>
+      <p style="color:#adbac7;font-size:0.88rem;margin-bottom:14px;white-space:pre-line">Celeste는 압도적으로 긍정적인 평가를 유지하며, 극한의 난이도에도 불구하고 플레이어들에게 성취감과 감동을 선사하고 있습니다. 다국어 사용자들이 '신작', 'peak game' 등의 극찬을 아끼지 않으며, 특히 사망 횟수가 수백~수천 회에 달하는 높은 난이도가 오히려 게임의 매력 포인트로 작용하고 있습니다. 정교한 조작감, 훌륭한 사운드트랙, 감동적인 스토리텔링이 핵심 강점으로 언급되며, 보조 모드 제공으로 접근성도 확보했습니다. 모드 지원으로 무한한 재미를 제공하며 장기적인 플레이어 유지에 성공하고 있습니다.</p>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:4px">
+        <div style="width:100%;background:#3fb950" title="긍정 100%"></div>
+        <div style="width:0%;background:#8b949e" title="중립 0%"></div>
+        <div style="width:0%;background:#f85149" title="부정 0%"></div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.78rem;margin-bottom:14px">
+        <span style="color:#3fb950">긍정 100%</span>
+        <span style="color:#8b949e">중립 0%</span>
+        <span style="color:#f85149">부정 0%</span>
+      </div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">핫토픽</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">극한 난이도와 수천 회 사망에도 불구한 압도적 긍정 평가</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">컨트롤러 vs 키보드 조작 난이도 차이 논의</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">정신 건강과 자아 성찰을 다룬 깊이 있는 스토리텔링</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">골든 베리·딸기 수집 등 엔드 콘텐츠의 중독성</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">Strawberry Jam 등 모드 커뮤니티의 활성화</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">트렌드 키워드</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">난이도</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">사운드트랙</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">정밀한 조작감</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">성취감</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">모드 지원</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">골든 베리</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">컨트롤러 추천</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">감동적 스토리</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">100% 완료</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">플랫포머 최고봉</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">주요 이슈</div><div style="margin-bottom:8px"><strong style="color:#d29922;font-size:0.82rem">⚙️ 운영이슈</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>모드 사용 시 시간 관리 주의 필요성 언급 (중독성 경고)</li><li>특정 챕터(호텔, 9챕터)에서 난이도 급상승으로 이탈 가능성</li><li>스토리 전달 방식이 지나치게 직접적이라는 소수 의견 존재</li></ul></div>
+      
+    </div>
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;break-inside:avoid">
+      <div style="display:flex;gap:14px;margin-bottom:14px;align-items:flex-start">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/1145360/header.jpg" style="width:120px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <div style="flex:1">
+          <h2 style="color:#e6edf3;font-size:1.05rem">Hades</h2>
+          <div style="color:#8b949e;font-size:0.78rem;margin-top:3px">
+            리뷰 60건 &nbsp;·&nbsp; 뉴스 0건 &nbsp;·&nbsp;
+            크롤 2.3s &nbsp;·&nbsp; 분석 13.5s
+          </div>
+        </div>
+      </div>
+      <p style="color:#adbac7;font-size:0.88rem;margin-bottom:14px;white-space:pre-line">Hades는 압도적으로 긍정적인 반응을 받고 있으며, 로그라이크 장르에 익숙하지 않은 유저들도 중독성 있는 게임플레이와 스토리에 높은 만족도를 보입니다. 그리스 신화 기반의 스토리텔링, 캐릭터 깊이, 사운드트랙이 특히 호평받고 있습니다. 일부 유저는 엔드게임 콘텐츠의 반복성과 그라인드 요소에 대해 피로감을 표현했으나, 전반적으로 게임의 완성도와 재미를 극찬하고 있습니다. 컨트롤러 호환성 문제가 일부 보고되었습니다.</p>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:4px">
+        <div style="width:98%;background:#3fb950" title="긍정 98%"></div>
+        <div style="width:2%;background:#8b949e" title="중립 2%"></div>
+        <div style="width:0%;background:#f85149" title="부정 0%"></div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.78rem;margin-bottom:14px">
+        <span style="color:#3fb950">긍정 98%</span>
+        <span style="color:#8b949e">중립 2%</span>
+        <span style="color:#f85149">부정 0%</span>
+      </div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">핫토픽</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">중독성 있는 게임플레이와 시간 가는 줄 모르는 몰입감</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">그리스 신화 기반 스토리와 캐릭터 상호작용의 높은 완성도</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">로그라이크 초보자도 즐길 수 있는 접근성과 학습 곡선</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">뛰어난 사운드트랙과 아트 디렉션</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">엔드게임 그라인드의 반복성</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">트렌드 키워드</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">중독성</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">그리스신화</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">사운드트랙</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">로그라이크</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">스토리텔링</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">주요 이슈</div><div style="margin-bottom:8px"><strong style="color:#f85149;font-size:0.82rem">🐛 버그</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>컨트롤러 Y축 반전 문제 및 설정 불가</li><li>게임 창 전환 시 캐릭터가 우상향으로 자동 이동하는 버그</li></ul></div><div style="margin-bottom:8px"><strong style="color:#3fb950;font-size:0.82rem">💡 요청사항</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>엔드게임 콘텐츠의 보상 개선</li><li>그라인드 요소 완화 또는 진행 속도 조정</li></ul></div><div style="margin-bottom:8px"><strong style="color:#d29922;font-size:0.82rem">⚙️ 운영이슈</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>컨트롤러 호환성 개선 필요</li><li>장시간 플레이 유저를 위한 추가 콘텐츠 고려</li></ul></div>
+      
+    </div>
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;break-inside:avoid">
+      <div style="display:flex;gap:14px;margin-bottom:14px;align-items:flex-start">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/391540/header.jpg" style="width:120px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <div style="flex:1">
+          <h2 style="color:#e6edf3;font-size:1.05rem">Undertale</h2>
+          <div style="color:#8b949e;font-size:0.78rem;margin-top:3px">
+            리뷰 60건 &nbsp;·&nbsp; 뉴스 0건 &nbsp;·&nbsp;
+            크롤 2.4s &nbsp;·&nbsp; 분석 12.4s
+          </div>
+        </div>
+      </div>
+      <p style="color:#adbac7;font-size:0.88rem;margin-bottom:14px;white-space:pre-line">Undertale은 출시 11년이 지났음에도 여전히 압도적으로 긍정적인 평가를 받고 있습니다. 유저들은 스토리텔링, 음악(특히 Toby Fox의 작곡), 캐릭터(Sans, Papyrus, Asriel 등)에 대한 애정을 표현하고 있습니다. 다국어 커뮤니티(러시아, 중국, 포르투갈, 스페인 등)가 활발하며, 여러 엔딩 루트를 반복 플레이하는 충성도 높은 유저층을 확보하고 있습니다. 전반적으로 '명작', 'PEAK' 등의 극찬이 주를 이루며, Deltarune 후속작으로의 자연스러운 유입도 발생하고 있습니다.</p>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:4px">
+        <div style="width:96%;background:#3fb950" title="긍정 96%"></div>
+        <div style="width:0%;background:#8b949e" title="중립 0%"></div>
+        <div style="width:4%;background:#f85149" title="부정 4%"></div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.78rem;margin-bottom:14px">
+        <span style="color:#3fb950">긍정 96%</span>
+        <span style="color:#8b949e">중립 0%</span>
+        <span style="color:#f85149">부정 4%</span>
+      </div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">핫토픽</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">캐릭터 애정 표현 (Sans, Papyrus, Asriel, Toriel, Undyne 등)</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">음악과 사운드트랙 찬사 (Hopes and Dreams 등)</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">멀티 엔딩 시스템과 재플레이 가치 (Pacifist, Genocide, Neutral 루트)</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">트렌드 키워드</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">스토리텔링</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">캐릭터</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">음악/사운드트랙</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">멀티엔딩</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">명작/PEAK</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">주요 이슈</div><div style="margin-bottom:8px"><strong style="color:#3fb950;font-size:0.82rem">💡 요청사항</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>캐릭터 관련 성인 콘텐츠 요청 (일부 부적절한 리뷰)</li></ul></div><div style="margin-bottom:8px"><strong style="color:#d29922;font-size:0.82rem">⚙️ 운영이슈</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>소수 비추천 리뷰의 구체적 불만 내용 부재</li><li>일부 유저의 극단적 표현 모니터링 필요</li></ul></div>
+      
+    </div>
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;break-inside:avoid">
+      <div style="display:flex;gap:14px;margin-bottom:14px;align-items:flex-start">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/268910/header.jpg" style="width:120px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">
+        <div style="flex:1">
+          <h2 style="color:#e6edf3;font-size:1.05rem">Cuphead</h2>
+          <div style="color:#8b949e;font-size:0.78rem;margin-top:3px">
+            리뷰 60건 &nbsp;·&nbsp; 뉴스 0건 &nbsp;·&nbsp;
+            크롤 2.5s &nbsp;·&nbsp; 분석 13.7s
+          </div>
+        </div>
+      </div>
+      <p style="color:#adbac7;font-size:0.88rem;margin-bottom:14px;white-space:pre-line">Cuphead은 압도적으로 긍정적인 평가를 받고 있으며, 1930년대 레트로 카툰 스타일의 독특한 아트와 재즈 사운드트랙이 핵심 강점으로 언급됩니다. 높은 난이도가 주요 특징이지만 이를 긍정적인 도전 과제로 받아들이는 유저가 대다수입니다. 다크소울에 비견되는 난이도로 인해 분노와 스트레스를 경험하면서도 클리어 시 성취감이 크다는 평가가 지배적입니다. 일부 유저는 2026년 현재까지 온라인 Co-op 미지원을 아쉬워하고 있습니다.</p>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:4px">
+        <div style="width:94%;background:#3fb950" title="긍정 94%"></div>
+        <div style="width:2%;background:#8b949e" title="중립 2%"></div>
+        <div style="width:4%;background:#f85149" title="부정 4%"></div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.78rem;margin-bottom:14px">
+        <span style="color:#3fb950">긍정 94%</span>
+        <span style="color:#8b949e">중립 2%</span>
+        <span style="color:#f85149">부정 4%</span>
+      </div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">핫토픽</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">1930년대 레트로 카툰 스타일 아트와 재즈 음악의 독창성</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">다크소울급 고난이도 보스전과 도전 과제</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">300% 완료 및 도전과제 달성 리플레이성</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">온라인 Co-op 기능 부재 불만</span><span style="background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb66;border-radius:12px;padding:2px 10px;font-size:0.8rem">DLC 아스트랄 쿠키 등 난이도 조절 옵션</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">트렌드 키워드</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">레트로카툰</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">고난이도</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">보스러시</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">재즈사운드트랙</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">300%완료</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">다크소울</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">수제애니메이션</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">성취감</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">분노게임</span><span style="background:#2d333b;color:#adbac7;border-radius:4px;padding:2px 8px;font-size:0.8rem">리플레이성</span></div>
+      <div style="font-size:0.75rem;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">주요 이슈</div><div style="margin-bottom:8px"><strong style="color:#3fb950;font-size:0.82rem">💡 요청사항</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>온라인 멀티플레이어 Co-op 기능 추가</li><li>차기작 빠른 출시 요청</li></ul></div><div style="margin-bottom:8px"><strong style="color:#d29922;font-size:0.82rem">⚙️ 운영이슈</strong><ul style="padding-left:16px;margin-top:3px;color:#adbac7;font-size:0.83rem"><li>2026년 현재까지도 꾸준한 유저 유입 및 재방문</li><li>Switch 등 멀티플랫폼에서 반복 구매 발생</li></ul></div>
+      
+    </div></div>
+        
+</div>
+
+<div style="text-align:center;padding:24px;color:#8b949e;font-size:0.8rem;border-top:1px solid #30363d">
+  Game Trend Analyzer — Team Agent POC &nbsp;·&nbsp; Powered by Steam API + Anthropic Claude
+  &nbsp;·&nbsp; Agent A (Detector) + Agent C (Recommender) + Agent B (Notifier sim) + Agent D (UI)
+</div>
+
+</body>
+</html>

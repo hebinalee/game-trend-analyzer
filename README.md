@@ -58,10 +58,24 @@ docker-compose up --build
 | 날짜 | 종류 | 링크 |
 |------|------|------|
 | 2026-04-11 | 동향 리포트 | [렌더링된 페이지로 보기 →](https://raw.githack.com/hebinalee/game-trend-analyzer/master/reports/steam-trend-2026-04-11.html) |
-| 2026-04-19 | Team Agent POC | [렌더링된 페이지로 보기 →](https://raw.githack.com/hebinalee/game-trend-analyzer/master/reports/poc-pipeline-2026-04-19.html) |
+| 2026-04-19 | Team Agent POC (Slay the Spire 2) | [렌더링된 페이지로 보기 →](https://raw.githack.com/hebinalee/game-trend-analyzer/master/reports/poc-pipeline-2026-04-19-slay-the-spire-2.html) |
 
-> - 동향 리포트: `scripts/generate_report.py` → `reports/steam-trend-YYYY-MM-DD.html`
-> - Team Agent POC: `scripts/poc_pipeline.py` → `reports/poc-pipeline-YYYY-MM-DD.html`
+> **동향 리포트**
+> ```bash
+> python scripts/generate_report.py
+> # 출력: reports/steam-trend-YYYY-MM-DD.html
+> ```
+>
+> **Team Agent POC**
+> ```bash
+> # Top 10 기본 모드
+> python scripts/poc_pipeline.py
+> # 출력: reports/poc-pipeline-YYYY-MM-DD.html
+>
+> # 커스텀 게임 모드 (메인 게임 + 유사 장르 게임 분석)
+> python scripts/poc_pipeline.py --game "Elden Ring"
+> # 출력: reports/poc-pipeline-YYYY-MM-DD-elden-ring.html
+> ```
 
 ## 수집 데이터
 
