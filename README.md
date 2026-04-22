@@ -74,6 +74,9 @@ docker-compose up --build
 >
 > **Team Agent POC**
 > ```bash
+> # 의존성 설치 (최초 1회)
+> pip install -r scripts/requirements.txt
+>
 > # Top 10 기본 모드
 > python scripts/poc_pipeline.py
 > # 출력: reports/poc-pipeline-YYYY-MM-DD.html
