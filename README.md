@@ -51,6 +51,12 @@ docker-compose up --build
 
 ![Architecture](docs/architecture.png)
 
+## Slack 알림 예시
+
+이상 감지 시 담당자 채널에 자동 전송되는 CRITICAL 알림입니다.
+
+![Slack Alert](docs/slack-alert-critical.png)
+
 ## 샘플 리포트
 
 [`reports/`](./reports/) 폴더에 실제 실행 결과 리포트가 포함되어 있습니다.
