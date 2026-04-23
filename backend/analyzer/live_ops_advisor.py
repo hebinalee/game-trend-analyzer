@@ -1,6 +1,6 @@
 """
-Agent E — Game Ops QA
-=====================
+Agent E — Game LiveOps Advisor
+==============================
 Claude Tool Use 기반 게임 운영 질문 답변 엔진.
 
 RAG 대신 Tool Use를 사용하는 이유:

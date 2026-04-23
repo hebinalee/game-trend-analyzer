@@ -1,12 +1,12 @@
 from pydantic import BaseModel
 
 
-class QARequest(BaseModel):
+class LiveOpsAdvisorRequest(BaseModel):
     game_id: int
     question: str
 
 
-class QAResponse(BaseModel):
+class LiveOpsAdvisorResponse(BaseModel):
     answer: str
     tools_used: list[str]
     game_name: str

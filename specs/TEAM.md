@@ -17,7 +17,7 @@ AI가 먼저 감지하고 원인을 분석하여 대응 방안을 밀어주는
 | **Agent B** | `backend/notifier/` — Slack 알림 | 완료 |
 | **Agent C** | `backend/analyzer/action_recommender.py` — 대응 제안 | 완료 |
 | **Agent D** | `backend/api/alerts.py` + `frontend/` — API·UI | 완료 |
-| **Agent E** | `backend/analyzer/game_qa.py` + `backend/api/qa.py` — Game Ops QA | 완료 |
+| **Agent E** | `backend/analyzer/live_ops_advisor.py` + `backend/api/live_ops_advisor.py` — Game LiveOps Advisor | 완료 |
 
 ---
 

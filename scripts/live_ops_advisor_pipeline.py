@@ -1,6 +1,6 @@
 """
-Game Ops QA — Agent E POC
-=========================
+Game LiveOps Advisor — Agent E POC
+===================================
 수집된 리뷰·패치 데이터를 바탕으로 게임 운영자의 질문에 답변하는 서비스 데모.
 
 RAG 대신 Claude Tool Use를 사용하는 이유:
@@ -9,10 +9,10 @@ RAG 대신 Claude Tool Use를 사용하는 이유:
   - 벡터 DB 등 추가 인프라 불필요
 
 실행:
-  python scripts/qa_pipeline.py --game "Elden Ring"               # 데모 모드 (예시 질문 3개 자동)
-  python scripts/qa_pipeline.py --game "Elden Ring" --interactive  # 대화형 모드
-  python scripts/qa_pipeline.py --game "Elden Ring" --days 14     # 수집 기간 조정 (기본 7일)
-  python scripts/qa_pipeline.py --game "Elden Ring" --save        # 결과를 reports/ 에 마크다운으로 저장
+  python scripts/live_ops_advisor_pipeline.py --game "Elden Ring"               # 데모 모드 (예시 질문 3개 자동)
+  python scripts/live_ops_advisor_pipeline.py --game "Elden Ring" --interactive  # 대화형 모드
+  python scripts/live_ops_advisor_pipeline.py --game "Elden Ring" --days 14     # 수집 기간 조정 (기본 7일)
+  python scripts/live_ops_advisor_pipeline.py --game "Elden Ring" --save        # 결과를 reports/ 에 마크다운으로 저장
 """
 
 import argparse
@@ -481,7 +481,7 @@ async def run_interactive(game_data: dict, client: anthropic.AsyncAnthropic,
 # ── main ─────────────────────────────────────────────────────────────────────
 
 async def main() -> None:
-    parser = argparse.ArgumentParser(description="Game Ops QA — Agent E POC")
+    parser = argparse.ArgumentParser(description="Game LiveOps Advisor — Agent E POC")
     parser.add_argument("--game", type=str, required=True,
                         help="분석할 게임 이름 (Steam 검색)")
     parser.add_argument("--days", type=int, default=7,

@@ -42,11 +42,11 @@ Steam API ──▶ Crawler ──▶ PostgreSQL
 
 ※ Agent E는 Push 파이프라인과 독립적으로 동작
 
-운영자 질문 (POST /api/qa)
+운영자 질문 (POST /api/live-ops-advisor)
                                │
                     ┌──────────▼──────────┐
-                    │   Agent E           │  Game Ops QA (on-demand)
-                    │   game_qa           │  Claude Tool Use → DB 조회 → 자연어 답변
+                    │   Agent E           │  Game LiveOps Advisor (on-demand)
+                    │   live_ops_advisor  │  Claude Tool Use → DB 조회 → 자연어 답변
                     └─────────────────────┘
 ```
 
@@ -61,7 +61,7 @@ Steam API ──▶ Crawler ──▶ PostgreSQL
 | 대응 제안 | Alert flush 직후 (같은 트랜잭션) | Agent C |
 | Slack 알림 | Alert commit 직후 (별도 비동기) | Agent B |
 | LLM 분석 | 매일 07:00 KST (별도 스케줄) | 기존 analyzer |
-| Game Ops QA | 운영자 요청 시 on-demand (`POST /api/qa`) | Agent E |
+| LiveOps Advisor | 운영자 요청 시 on-demand (`POST /api/live-ops-advisor`) | Agent E |
 
 ---
 
@@ -152,7 +152,7 @@ backend/
 ├── analyzer/
 │   ├── llm_analyzer.py         # 기존: 일간 리포트 생성
 │   ├── action_recommender.py   # Agent C: 대응 제안, fill_recommendations()
-│   └── game_qa.py              # Agent E: Tool Use 에이전트 루프, answer_question()
+│   └── live_ops_advisor.py     # Agent E: Tool Use 에이전트 루프, answer_question()
 ├── notifier/
 │   ├── __init__.py
 │   └── slack_notifier.py       # Agent B: Slack Incoming Webhook
@@ -163,17 +163,17 @@ backend/
 │   └── alert.py                # alerts 테이블
 ├── schemas/
 │   ├── alert.py
-│   └── qa.py                   # Agent E: QARequest / QAResponse
+│   └── live_ops_advisor.py          # Agent E: OpsAdvisorRequest / OpsAdvisorResponse
 ├── api/
 │   ├── games.py
 │   ├── reports.py
 │   ├── dashboard.py
 │   ├── alerts.py               # Agent D: 이슈 관리 API
-│   └── qa.py                   # Agent E: POST /api/qa
+│   └── live_ops_advisor.py          # Agent E: POST /api/live-ops-advisor
 └── scheduler/
     └── jobs.py                 # 크롤링 → 감지 체인 연결됨
 
 scripts/
 ├── poc_pipeline.py             # POC: Steam Top10 + 커스텀 게임 트렌드 리포트
-└── qa_pipeline.py              # Agent E POC: standalone QA (DB 없이 실행)
+└── live_ops_advisor_pipeline.py     # Agent E POC: standalone LiveOps Advisor (DB 없이 실행)
 ```

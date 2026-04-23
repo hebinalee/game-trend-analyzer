@@ -1,8 +1,8 @@
-# Agent E — Game Ops QA
+# Agent E — Game LiveOps Advisor
 
 **상태**: 완료  
-**담당 파일**: `backend/analyzer/game_qa.py`, `backend/api/qa.py`, `backend/schemas/qa.py`  
-**POC**: `scripts/qa_pipeline.py`
+**담당 파일**: `backend/analyzer/live_ops_advisor.py`, `backend/api/live_ops_advisor.py`, `backend/schemas/live_ops_advisor.py`  
+**POC**: `scripts/live_ops_advisor_pipeline.py`
 
 ---
 
@@ -22,7 +22,7 @@ RAG 대신 Tool Use를 선택한 이유:
 
 | 소스 | 내용 |
 |------|------|
-| `POST /api/qa` body | `game_id: int`, `question: str` |
+| `POST /api/live-ops-advisor` body | `game_id: int`, `question: str` |
 | `posts` 테이블 | 리뷰(`post_type="review"`) + 뉴스(`post_type="news"`) |
 
 ---
@@ -67,7 +67,7 @@ RAG 대신 Tool Use를 선택한 이유:
 
 ## API 계약
 
-### POST /api/qa
+### POST /api/live-ops-advisor
 
 **Request**
 ```json
@@ -89,16 +89,16 @@ RAG 대신 Tool Use를 선택한 이유:
 
 ```bash
 # 데모 모드 (예시 질문 3개 자동 실행)
-python scripts/qa_pipeline.py --game "Elden Ring"
+python scripts/live_ops_advisor_pipeline.py --game "Elden Ring"
 
 # 대화형 모드
-python scripts/qa_pipeline.py --game "Elden Ring" --interactive
+python scripts/live_ops_advisor_pipeline.py --game "Elden Ring" --interactive
 
 # 결과 파일 저장 (reports/qa-{날짜}-{게임슬러그}.md)
-python scripts/qa_pipeline.py --game "Elden Ring" --interactive --save
+python scripts/live_ops_advisor_pipeline.py --game "Elden Ring" --interactive --save
 
 # 수집 기간 조정
-python scripts/qa_pipeline.py --game "Elden Ring" --days 14
+python scripts/live_ops_advisor_pipeline.py --game "Elden Ring" --days 14
 ```
 
 POC는 DB 없이 Steam API에서 직접 데이터를 수집하여 동작한다.
@@ -107,8 +107,8 @@ POC는 DB 없이 Steam API에서 직접 데이터를 수집하여 동작한다.
 
 ## 체크리스트
 
-- [x] `backend/analyzer/game_qa.py` — Tool 구현 + 에이전트 루프
-- [x] `backend/schemas/qa.py` — QARequest / QAResponse Pydantic 스키마
-- [x] `backend/api/qa.py` — POST /api/qa 엔드포인트
-- [x] `backend/main.py` — qa_router 등록
-- [x] `scripts/qa_pipeline.py` — DB 없이 실행 가능한 standalone POC
+- [x] `backend/analyzer/live_ops_advisor.py` — Tool 구현 + 에이전트 루프
+- [x] `backend/schemas/live_ops_advisor.py` — LiveOpsAdvisorRequest / LiveOpsAdvisorResponse Pydantic 스키마
+- [x] `backend/api/live_ops_advisor.py` — POST /api/live-ops-advisor 엔드포인트
+- [x] `backend/main.py` — live_ops_advisor_router 등록
+- [x] `scripts/live_ops_advisor_pipeline.py` — DB 없이 실행 가능한 standalone POC
