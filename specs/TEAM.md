@@ -14,9 +14,10 @@ AI가 먼저 감지하고 원인을 분석하여 대응 방안을 밀어주는
 |------|-----------|------|
 | **팀장** (Claude) | 설계·리뷰·통합 | 상시 |
 | **Agent A** | `backend/detector/` — 이상 감지 엔진 | 완료 |
-| **Agent B** | `backend/notifier/` — Slack 알림 | 예정 |
+| **Agent B** | `backend/notifier/` — Slack 알림 | 완료 |
 | **Agent C** | `backend/analyzer/action_recommender.py` — 대응 제안 | 완료 |
-| **Agent D** | `backend/api/alerts.py` + `frontend/` — API·UI | 예정 |
+| **Agent D** | `backend/api/alerts.py` + `frontend/` — API·UI | 완료 |
+| **Agent E** | `backend/analyzer/live_ops_advisor.py` + `backend/api/live_ops_advisor.py` — Game LiveOps Advisor | 완료 |
 
 ---
 
@@ -53,6 +54,7 @@ AI가 먼저 감지하고 원인을 분석하여 대응 방안을 밀어주는
 - **A → C**: Alert 객체 + 현재 윈도우 posts를 인수로 직접 전달 (같은 트랜잭션)
 - **A+C → B**: DB commit 완료 후 Alert ID를 넘겨 비동기 전송
 - **B → D**: DB 폴링 또는 FastAPI 엔드포인트로 읽기 (단방향)
+- **E**: 독립 실행. 사용자 요청에 의해 on-demand로 DB를 조회하여 답변 생성 (Push 파이프라인과 무관)
 
 ---
 

@@ -10,6 +10,7 @@ from api.games import router as games_router
 from api.reports import router as reports_router
 from api.dashboard import router as dashboard_router
 from api.alerts import router as alerts_router
+from api.live_ops_advisor import router as live_ops_advisor_router
 from crawler.steam_community import crawl_all_games
 from analyzer.llm_analyzer import analyze_all_games
 from detector.anomaly_detector import detect_all_games
@@ -46,6 +47,7 @@ app.include_router(games_router)
 app.include_router(reports_router)
 app.include_router(dashboard_router)
 app.include_router(alerts_router)
+app.include_router(live_ops_advisor_router)
 
 
 @app.post("/api/admin/trigger-crawl", tags=["admin"])
