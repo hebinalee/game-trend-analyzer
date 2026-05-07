@@ -37,3 +37,6 @@ export const updateAlertStatus = (alertId, status) =>
 
 export const getAlertsUnreadCount = () =>
   api.get('/alerts/unread-count').then(r => r.data)
+
+export const askLiveOpsAdvisor = (gameId, question) =>
+  api.post('/live-ops-advisor', { game_id: gameId, question }).then(r => r.data)
