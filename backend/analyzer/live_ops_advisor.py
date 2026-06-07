@@ -106,7 +106,7 @@ TOOLS = [
 async def _get_recent_reviews(db: AsyncSession, game_id: int,
                                days_back: int = 7, sentiment: str = "all",
                                limit: int = 50) -> dict:
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
+    cutoff = datetime.utcnow() - timedelta(days=days_back)
     result = await db.execute(
         select(Post)
         .where(Post.game_id == game_id)
@@ -139,7 +139,7 @@ async def _get_recent_reviews(db: AsyncSession, game_id: int,
 
 
 async def _get_patch_notes(db: AsyncSession, game_id: int, days_back: int = 30) -> dict:
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
+    cutoff = datetime.utcnow() - timedelta(days=days_back)
     result = await db.execute(
         select(Post)
         .where(Post.game_id == game_id)
@@ -167,7 +167,7 @@ async def _get_patch_notes(db: AsyncSession, game_id: int, days_back: int = 30) 
 
 
 async def _get_sentiment_stats(db: AsyncSession, game_id: int, days_back: int = 7) -> dict:
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
+    cutoff = datetime.utcnow() - timedelta(days=days_back)
     result = await db.execute(
         select(Post)
         .where(Post.game_id == game_id)
@@ -204,7 +204,7 @@ async def _get_sentiment_stats(db: AsyncSession, game_id: int, days_back: int = 
 
 async def _search_by_keyword(db: AsyncSession, game_id: int,
                               keywords: list[str], days_back: int = 14) -> dict:
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
+    cutoff = datetime.utcnow() - timedelta(days=days_back)
     result = await db.execute(
         select(Post)
         .where(Post.game_id == game_id)

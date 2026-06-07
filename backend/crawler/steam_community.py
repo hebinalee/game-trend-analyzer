@@ -24,7 +24,7 @@ STEAM_NEWS_URL = "https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/"
 
 async def _fetch_reviews(app_id: str, days_back: int = 1) -> list[dict]:
     """Steam 리뷰 API에서 최근 리뷰를 수집한다."""
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
+    cutoff = datetime.utcnow() - timedelta(days=days_back)
     params = {
         "json": 1,
         "language": "all",
@@ -42,7 +42,7 @@ async def _fetch_reviews(app_id: str, days_back: int = 1) -> list[dict]:
             for review in data.get("reviews", []):
                 created = datetime.fromtimestamp(
                     review["timestamp_created"], tz=timezone.utc
-                )
+                ).replace(tzinfo=None)
                 if created < cutoff:
                     continue
                 posts.append({
@@ -62,7 +62,7 @@ async def _fetch_reviews(app_id: str, days_back: int = 1) -> list[dict]:
 
 async def _fetch_news(app_id: str, days_back: int = 1) -> list[dict]:
     """Steam 뉴스 API에서 최근 공식 뉴스/패치노트를 수집한다."""
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
+    cutoff = datetime.utcnow() - timedelta(days=days_back)
     params = {
         "appid": app_id,
         "count": 20,
@@ -76,7 +76,7 @@ async def _fetch_news(app_id: str, days_back: int = 1) -> list[dict]:
             resp.raise_for_status()
             data = resp.json()
             for item in data.get("appnews", {}).get("newsitems", []):
-                created = datetime.fromtimestamp(item["date"], tz=timezone.utc)
+                created = datetime.fromtimestamp(item["date"], tz=timezone.utc).replace(tzinfo=None)
                 if created < cutoff:
                     continue
                 posts.append({
@@ -127,7 +127,7 @@ async def crawl_all_games(db_session: AsyncSession) -> None:
                     continue
                 db_session.add(Post(
                     game_id=game.id,
-                    crawled_at=datetime.now(timezone.utc),
+                    crawled_at=datetime.utcnow(),
                     **post_dict,
                 ))
 

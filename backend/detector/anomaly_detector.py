@@ -84,7 +84,7 @@ async def _is_duplicate(
     db: AsyncSession, game_id: int, alert_type: str
 ) -> bool:
     """동일 게임·타입의 알림이 ALERT_COOLDOWN_HOURS 내에 이미 존재하면 True."""
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=ALERT_COOLDOWN_HOURS)
+    cutoff = datetime.utcnow() - timedelta(hours=ALERT_COOLDOWN_HOURS)
     result = await db.execute(
         select(Alert)
         .where(Alert.game_id == game_id)
@@ -109,7 +109,7 @@ async def _create_alert(
         alert_type=alert_type,
         title=title,
         detail=detail,
-        detected_at=datetime.now(timezone.utc),
+        detected_at=datetime.utcnow(),
     )
     db.add(alert)
     await db.flush()  # ID 확보 (commit은 호출자가 담당)
@@ -127,7 +127,7 @@ async def detect_game_anomalies(
     단일 게임에 대해 이상 감지를 수행하고 생성된 Alert 목록을 반환한다.
     """
     if now is None:
-        now = datetime.now(timezone.utc)
+        now = datetime.utcnow()
 
     current_start = now - timedelta(hours=CURRENT_WINDOW_HOURS)
     baseline_start = now - timedelta(hours=CURRENT_WINDOW_HOURS + BASELINE_WINDOW_HOURS)
@@ -255,7 +255,7 @@ async def detect_all_games(db: AsyncSession) -> list[Alert]:
     games = games_result.scalars().all()
 
     all_alerts: list[Alert] = []
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
 
     for game in games:
         try:

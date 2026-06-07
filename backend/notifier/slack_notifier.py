@@ -169,7 +169,7 @@ async def retry_failed_notifications(db: AsyncSession) -> None:
     from sqlalchemy import select
     from models.game import Game as GameModel
 
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)  # 24h 초과는 재시도 안 함
+    cutoff = datetime.utcnow() - timedelta(hours=24)  # 24h 초과는 재시도 안 함
 
     result = await db.execute(
         select(Alert)
