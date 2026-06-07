@@ -1,0 +1,292 @@
+# Developer Log — Game Trend Analyzer
+
+> A chronological record of key design decisions, turning points, and implementation milestones.
+
+---
+
+## 2026-04-04 — Project Initialization
+
+**Goal:** Build the foundational service to automatically collect and analyze game community trends and deliver reports.
+
+**Implemented:**
+- Backend: FastAPI + SQLAlchemy ORM (`Game`, `Post`, `Report` models)
+- Crawler: Playwright-based Naver Game Lounge scraper (top 10 games)
+- Analysis engine: Sentiment analysis and trend report generation via Claude API
+- Scheduler: APScheduler — crawl every 6h, analyze daily at 07:00 KST
+- Frontend: React 18 + Vite + TailwindCSS dashboard (with comparison view)
+- Infrastructure: Docker Compose integrating PostgreSQL + backend + frontend
+
+---
+
+## 2026-04-11 — Crawler Replacement: Naver Game Lounge → Steam Community API
+
+**Background:** Naver Game Lounge required Playwright for JS rendering, carrying high CSS selector breakage risk. Steam offers official APIs, providing far better stability and scalability.
+
+| Aspect | Naver Game Lounge | Steam Community |
+|--------|------------------|----------------|
+| Crawling method | Playwright (JS rendering required) | Official REST API |
+| Selector breakage risk | High | Low (API-driven) |
+| Language | Korean | English (multilingual) |
+| Game selection | Manually fixed | Automatable via concurrent players Top 10 |
+
+**Changes:**
+- Deleted `crawler/naver_lounge.py` → wrote `crawler/steam_community.py` (httpx-based)
+- APIs used: `store.steampowered.com/appreviews/{appid}` (reviews), `api.steampowered.com/ISteamNews/GetNewsForApp/v2/` (patch notes)
+- `Game` model: renamed `lounge_id` → `app_id` (Steam App ID, integer)
+- Replaced `SEED_GAMES` with 10 popular Steam games (CS2, Dota 2, PUBG, etc.)
+- Updated LLM analysis prompt with Steam review/news context and `post_type` field
+- Removed Playwright + Chromium dependencies entirely → leaner Docker image
+
+---
+
+## 2026-04-12 — Standalone Report Generator and First Steam Trend Report
+
+**Implemented:**
+- `scripts/generate_report.py`: collects Steam reviews/news then calls Claude AI to produce and save an HTML report
+- `reports/steam-trend-2026-04-11.html`: first-ever trend analysis report covering 10 popular games
+- Created architecture diagram and reflected it in README
+
+---
+
+## 2026-04-13 — Documentation Improvements
+
+- Added sample report section to README
+- Replaced htmlpreview.github.io link (connection refused) with `raw.githack.com` for the sample report
+
+---
+
+## 2026-04-15 — Proactive AI Agent Team Design and Implementation (PR #1)
+
+**Background:** The existing service was purely passive — it generated daily reports for humans to read. Game operations staff (marketing, CS, planning, business) found it hard to trace community-side root causes when in-game metrics anomalies appeared.
+
+**Direction:** Evolve into a **proactive AI operations assistant** that detects anomalies first, then automatically pushes root-cause analysis and department-specific action items.
+
+### Agent Team Composition
+
+| Agent | Module | Role |
+|-------|--------|------|
+| Agent A — Anomaly Detector | `backend/detector/anomaly_detector.py` | Detects sentiment drops, review spikes, keyword surges; classifies severity |
+| Agent B — Slack Notifier | `backend/notifier/slack_notifier.py` | Sends Block Kit CRITICAL/WARNING messages; handles retry scheduling |
+| Agent C — Action Recommender | `backend/analyzer/action_recommender.py` | Calls Claude API → generates per-department action items (CS, Planning, Marketing, Business) |
+| Agent D — Issue Management API & UI | `backend/api/alerts.py` + `frontend/src/pages/Alerts.jsx` | Issue list/detail/status-update API, issue tracking dashboard |
+
+### Detection Logic (Agent A)
+
+| Type | WARNING Threshold | CRITICAL Threshold |
+|------|------------------|-------------------|
+| `sentiment_drop` | Negative ratio +20%p↑ & currently >50% | +30%p↑ & currently >60% |
+| `volume_spike` | Hourly review count 3×↑ | 5×↑ |
+| `keyword_alert` | Warning keywords +15%↑ (bug, lag, crash, etc.) | Urgent keywords +10%↑ (refund, server down, hack, etc.) |
+
+- Duplicate alerts for the same game + type are suppressed within a 6-hour window
+
+### Trigger Chain
+
+```
+Steam API → Crawler → DB
+                       ↓
+              [Agent A] Anomaly Detector
+                       ↓ anomaly found
+          ┌────────────┴─────────────┐
+ [Agent C] Action Recommender   [Agent B] Slack Notifier
+  (Claude API → dept. actions)   (Webhook → ops team)
+          └────────────┬─────────────┘
+                  alerts table
+                       ↓
+          [Agent D] React Issue Dashboard
+```
+
+### Specification Documents Created
+
+| File | Purpose |
+|------|---------|
+| `specs/TEAM.md` | Team charter — mission, 5 operating principles, collaboration protocol |
+| `specs/PLAN.md` | Roadmap — milestones, dependency graph |
+| `specs/ARCHITECTURE.md` | AS-IS → TO-BE, trigger chain, data contracts |
+| `specs/agents/agent_*.md` | Per-agent role spec and implementation checklist |
+
+### POC Pipeline Results (`scripts/poc_pipeline.py`)
+
+| Stage | Result | Duration |
+|-------|--------|----------|
+| Stage 1 Steam crawling | 10 games, 602 posts (600 reviews + 2 news) | 18.6s |
+| Stage 2 LLM analysis | 9 complete, 1 failed (Cyberpunk — empty response) | 161.7s |
+| Stage 3 Anomaly detection | 1 alert created (CS2 CRITICAL simulation) | 9ms |
+| Stage 4 Action recommendation | CS2 4-department action items generated | 20.2s |
+| Stage 5 Slack notification | Skipped (SLACK_WEBHOOK_URL not configured) | — |
+
+---
+
+## 2026-04-19 — Slack Webhook Integration and API Reliability Fixes (PR #2)
+
+**Problem 1 — Steam API Rate Limiting:**
+- Increased inter-game delay: 1s → 3s; review-to-news delay: 0.5s → 2s
+- Collection count recovered: ~7 posts (mostly 0) → 608 posts
+
+**Problem 2 — Intermittent empty Claude API responses:**
+- Added `_claude_call_with_retry()` helper
+- Retries up to 3 times on empty response or JSON parse failure (2s → 5s → 10s exponential backoff)
+
+**Slack Webhook Live Integration:**
+- Implemented `send_slack_alert()`
+  - CRITICAL: full Block Kit format (metrics + summary + top action items)
+  - WARNING: concise summary message only
+- Verified 2 successful Slack deliveries (1 CRITICAL, 1 WARNING)
+
+---
+
+## 2026-04-23 — Custom Game Mode (PR #3)
+
+**Background:** The service was locked to Steam Top 10. Operators needed the ability to specify any game for targeted analysis.
+
+**Design Decisions:**
+- Used Steam Store Search API (`store.steampowered.com/api/storesearch/`) for fuzzy matching — eliminates the need for exact title input
+- Used `appdetails` API to extract genres → `GENRE_GAME_MAP` (12 genres, 5–6 curated titles each) for automatic selection of 4 similar games
+- Falls back to Action genre if genre data is unavailable
+
+**Usage:**
+```bash
+python scripts/poc_pipeline.py                    # Default Top 10 mode
+python scripts/poc_pipeline.py --game "Elden Ring"  # Custom game mode
+```
+
+**Report Layout Changes:**
+- Main game: full-width solo placement at the top (★ badge + blue border)
+- Similar games: 2-column grid below
+- Filename includes main game slug: `poc-pipeline-{date}-{game-slug}.html`
+
+**Other:**
+- Added Slack CRITICAL alert screenshot (`docs/slack-alert-critical.png`)
+- Separated POC script dependencies: `scripts/requirements.txt`
+
+---
+
+## 2026-04-23 — Agent E Design: Introducing the Operator Q&A Service
+
+**Background:** Agents A–D all operated in push mode — anomaly detected, alert sent. A gap emerged: operators needed to ask questions directly, such as "Why has user retention been dropping lately?" or "Why is the reaction to this patch worse than the last one?" and get answers grounded in the stored review and patch data. This led to the decision to introduce **Agent E** as an on-demand Q&A agent.
+
+**Design Decision — RAG vs Tool Use:**
+
+Added **Agent E** to cover the role not addressed by Agents A–D: answering operators' on-demand questions.
+
+| Aspect | RAG | Tool Use (chosen) |
+|--------|-----|------------------|
+| Data structure | Suited for unstructured documents | Suited for structured DB/files |
+| Time filtering | Indirect | Direct query (`days_back`) |
+| Aggregation (ratios, counts) | Not possible | Possible |
+| Additional infrastructure | Vector DB required | None |
+| Accuracy | Approximate | Exact SQL |
+| Extra packages | chromadb, sentence-transformers | None |
+
+→ Date-based precise queries (e.g., "reactions since the last patch") are the core use case, so **Tool Use** was chosen.
+
+**Four Tools Implemented:**
+
+| Tool | Description |
+|------|-------------|
+| `get_recent_reviews` | Fetch reviews filtered by period and sentiment |
+| `get_patch_notes` | Fetch patch notes and official announcements |
+| `get_sentiment_stats` | Daily sentiment trend data |
+| `search_by_keyword` | Search posts by keyword (costume, balance, etc.) |
+
+**Tool Use Flow:**
+1. Operator submits a question
+2. Claude selects the necessary tools (0–N calls)
+3. Calls among `get_recent_reviews` / `get_patch_notes` / `get_sentiment_stats` / `search_by_keyword`
+4. Generates final answer after data collection is complete
+
+**Implementation:**
+
+| File | Role |
+|------|------|
+| `scripts/qa_pipeline.py` | POC script (3 demo questions auto-run + `--interactive` mode) |
+| `backend/analyzer/game_qa.py` | Agent E core logic |
+| `backend/schemas/qa.py` | Request/response Pydantic schemas |
+| `backend/api/qa.py` | `POST /api/qa` endpoint |
+
+**Usage:**
+```bash
+# Demo mode (3 preset questions run automatically)
+python scripts/qa_pipeline.py --game "Elden Ring"
+
+# Interactive mode
+python scripts/qa_pipeline.py --game "Elden Ring" --interactive
+
+# Extended data window
+python scripts/qa_pipeline.py --game "Elden Ring" --days 14 --interactive
+```
+
+---
+
+## 2026-04-24 — Agent E: Live Ops Advisor (PR #4)
+
+**Background:** Agents A–D all operate in push mode (anomaly detected → automatic alert). What was missing was an on-demand agent that could answer operators' active questions such as "Why are CS2 players requesting so many refunds lately?"
+
+**RAG vs Tool Use Decision:**
+- For structured DB data, precise SQL queries outperform vector search
+- No additional infrastructure (vector DB) required → **chose Tool Use**
+
+**Four Tools Implemented:**
+
+| Tool | Description |
+|------|-------------|
+| `get_recent_reviews` | Fetch N most recent reviews |
+| `get_patch_notes` | Fetch recent patch notes / official news |
+| `get_sentiment_stats` | Query sentiment statistics for a given period |
+| `search_by_keyword` | Full-text search of posts by keyword |
+
+**Agent Loop:** Claude selects and executes the necessary tools iteratively until it can produce a final answer (agentic loop).
+
+**Key Changes:**
+- Language detection: responds in the same language as the question (Korean → Korean, English → English)
+- `--save` flag: exports Q&A session to `reports/qa-{game-slug}-{date}.md` on exit
+- Naming refactor: `game_qa.py` → `live_ops_advisor.py`, API route `POST /api/qa` → `POST /api/live-ops-advisor`
+
+---
+
+## 2026-05-07 — Game Ops Portal Frontend (current branch: feature/portal)
+
+**Background:** The original `GameDetail` page was a simple report viewer. With Agent E (Live Ops Advisor) in place, an integrated **operator portal** was needed — combining reports and AI chat in a single view.
+
+**Implemented:**
+
+| Tab | Content |
+|-----|---------|
+| Tab 1 — Reports | Today's report + sentiment trend chart + competitor comparison in one view |
+| Tab 2 — AI Advisor | Live Ops Advisor API chat UI, suggested questions, tool-use badge display |
+
+**Changed Files:**
+
+| File | Change |
+|------|--------|
+| `frontend/src/api.js` | Added `askLiveOpsAdvisor(gameId, question)` function |
+| `frontend/src/components/AdvisorChat.jsx` | New AI advisor chat component |
+| `frontend/src/pages/GameDetail.jsx` | Fully restructured into tab layout |
+
+**`/game/:id` Page Structure:**
+
+Composed of a sidebar and a tab selection area.
+
+- **Sidebar:** Game info, tab selector (Reports / AI Advisor)
+- **Tab 1 — Reports:**
+  - Today's report (sentiment bar, issues, keywords)
+  - 7-day sentiment trend chart
+  - Competitor comparison (current game auto-included, up to 3 selectable)
+- **Tab 2 — AI Advisor:**
+  - Empty state: 4 suggested question buttons
+  - Chat UI: user/AI message bubbles, tool-use badge display
+  - Input: Enter to send, Shift+Enter for newline
+
+---
+
+## Current Status and Open Items
+
+| Item | Status |
+|------|--------|
+| Steam data collection pipeline | Complete |
+| Anomaly detection + Slack notifications | Complete |
+| Custom game mode (POC) | Complete |
+| Live Ops Advisor (Tool Use) | Complete |
+| Game Ops Portal frontend | In progress (feature/portal branch) |
+| `.env` config changes | Uncommitted (staged) |
+| `backend/config.py` and other backend files | Uncommitted (staged) |

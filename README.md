@@ -49,13 +49,13 @@ docker-compose up --build
 
 ## 시스템 아키텍처
 
-![Architecture](docs/architecture.png)
+![Architecture](docs/assets/architecture.png)
 
 ## Slack 알림 예시
 
 이상 감지 시 담당자 채널에 자동 전송되는 CRITICAL 알림입니다.
 
-![Slack Alert](docs/slack-alert-critical.png)
+![Slack Alert](docs/assets/slack-alert-critical.png)
 
 ## 샘플 리포트
 
@@ -97,3 +97,9 @@ docker-compose up --build
 
 - 크롤링: 매 6시간 자동 실행 (앱 시작 1분 후 즉시 1회 실행)
 - 분석: 매일 오전 7시 (KST) 자동 실행
+
+## 개발 히스토리
+
+주요 설계 결정과 개발 과정은 아래 로그에서 확인할 수 있습니다.
+
+[개발자 로그 →](docs/history/ko.md)
