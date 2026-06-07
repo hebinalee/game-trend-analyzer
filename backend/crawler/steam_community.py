@@ -108,7 +108,7 @@ async def crawl_game(game: Game, days_back: int = 1) -> list[dict]:
     return posts
 
 
-async def crawl_all_games(db_session: AsyncSession) -> None:
+async def crawl_all_games(db_session: AsyncSession, days_back: int = 1) -> None:
     """
     DB의 모든 active 게임에 대해 crawl_game을 순차 실행하고 DB에 저장한다.
     """
@@ -117,7 +117,7 @@ async def crawl_all_games(db_session: AsyncSession) -> None:
 
     for game in games:
         try:
-            posts_data = await crawl_game(game, days_back=1)
+            posts_data = await crawl_game(game, days_back=days_back)
 
             for post_dict in posts_data:
                 existing = await db_session.execute(
