@@ -95,16 +95,15 @@ async def analyze_all_games(db_session: AsyncSession) -> None:
     모든 active 게임에 대해 오늘 날짜 리포트를 생성하고 DB에 저장한다 (upsert).
     """
     today = date.today()
-    yesterday = today - timedelta(days=1)
 
     games_result = await db_session.execute(select(Game).where(Game.is_active == True))
     games = games_result.scalars().all()
 
     for game in games:
         try:
-            # 전날 수집된 게시글 조회
-            cutoff_start = datetime.combine(yesterday, datetime.min.time())
-            cutoff_end = datetime.combine(today, datetime.min.time())
+            # 최근 24시간 수집된 게시글 조회
+            cutoff_start = datetime.utcnow() - timedelta(hours=24)
+            cutoff_end = datetime.utcnow()
 
             posts_result = await db_session.execute(
                 select(Post)
