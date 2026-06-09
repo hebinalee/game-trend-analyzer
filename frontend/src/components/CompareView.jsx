@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   RadarChart, PolarGrid, PolarAngleAxis, Radar, Legend, ResponsiveContainer, Tooltip
 } from 'recharts'
@@ -5,8 +6,14 @@ import {
 const COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444']
 
 export default function CompareView({ results }) {
+  const [expanded, setExpanded] = useState({})
+
   if (!results || results.length === 0) {
     return <div className="text-center text-gray-400 dark:text-gray-500 py-8">게임을 선택하세요</div>
+  }
+
+  const toggleExpand = (gameId) => {
+    setExpanded(prev => ({ ...prev, [gameId]: !prev[gameId] }))
   }
 
   const radarData = [
@@ -60,11 +67,20 @@ export default function CompareView({ results }) {
             <h4 className="font-semibold mb-2">{r.game_name}</h4>
             {r.report ? (
               <>
-                <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mb-3">
+                <p className={`text-sm text-gray-600 dark:text-gray-300 mb-1 ${expanded[r.game_id] ? '' : 'line-clamp-3'}`}>
                   {r.report.summary || '요약 없음'}
                 </p>
+                <button
+                  onClick={() => toggleExpand(r.game_id)}
+                  className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 mb-3"
+                >
+                  {expanded[r.game_id] ? '접기 ▲' : '더보기 ▼'}
+                </button>
                 <div className="flex flex-wrap gap-1">
-                  {(r.report.hot_topics || []).slice(0, 3).map((t, j) => (
+                  {(expanded[r.game_id]
+                    ? (r.report.hot_topics || [])
+                    : (r.report.hot_topics || []).slice(0, 3)
+                  ).map((t, j) => (
                     <span key={j} className="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                       {t}
                     </span>

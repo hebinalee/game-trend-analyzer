@@ -51,14 +51,14 @@ app.include_router(live_ops_advisor_router)
 
 
 @app.post("/api/admin/trigger-crawl", tags=["admin"])
-async def trigger_crawl(background_tasks: BackgroundTasks):
-    """수동 크롤링 트리거"""
+async def trigger_crawl(background_tasks: BackgroundTasks, days_back: int = 1):
+    """수동 크롤링 트리거. days_back으로 수집 기간(일) 지정 가능 (기본값: 1)"""
     async def _run():
         async with async_session() as session:
-            await crawl_all_games(session)
+            await crawl_all_games(session, days_back=days_back)
 
     background_tasks.add_task(_run)
-    return {"message": "크롤링이 시작되었습니다."}
+    return {"message": f"크롤링이 시작되었습니다. (최근 {days_back}일)"}
 
 
 @app.post("/api/admin/trigger-analyze", tags=["admin"])
