@@ -1,3 +1,5 @@
+import { SENTIMENT } from '../colors.js'
+
 const ALERT_DOT = {
   CRITICAL: 'bg-red-500',
   WARNING: 'bg-yellow-400',
@@ -40,14 +42,14 @@ export default function ReportCard({ game, report, alertSeverity, onClick }) {
         <>
           {/* 감성 바 */}
           <div className="flex h-2 rounded-full overflow-hidden mb-3">
-            <div className="bg-green-400" style={{ width: `${pos}%` }} title={`긍정 ${pos}%`} />
-            <div className="bg-gray-300 dark:bg-gray-600" style={{ width: `${neu}%` }} title={`중립 ${neu}%`} />
-            <div className="bg-red-400" style={{ width: `${neg}%` }} title={`부정 ${neg}%`} />
+            <div style={{ width: `${pos}%`, backgroundColor: SENTIMENT.pos }} title={`긍정 ${pos}%`} />
+            <div style={{ width: `${neu}%`, backgroundColor: SENTIMENT.neu }} title={`중립 ${neu}%`} />
+            <div style={{ width: `${neg}%`, backgroundColor: SENTIMENT.neg }} title={`부정 ${neg}%`} />
           </div>
-          <div className="flex gap-2 text-xs text-gray-500 dark:text-gray-400 mb-3">
-            <span className="text-green-500">긍정 {pos}%</span>
-            <span>중립 {neu}%</span>
-            <span className="text-red-500">부정 {neg}%</span>
+          <div className="flex gap-2 text-xs mb-3">
+            <span style={{ color: SENTIMENT.pos }}>긍정 {pos}%</span>
+            <span style={{ color: SENTIMENT.neu }}>중립 {neu}%</span>
+            <span style={{ color: SENTIMENT.neg }}>부정 {neg}%</span>
           </div>
 
           {/* 요약 */}

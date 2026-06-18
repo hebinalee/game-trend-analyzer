@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { SENTIMENT } from '../colors.js'
 import { getGames, getReports, getLatestReport, compareGames } from '../api.js'
 import TrendChart from '../components/TrendChart.jsx'
 import CompareView from '../components/CompareView.jsx'
@@ -66,14 +67,14 @@ function ReportTab({ game, report, history, allGames }) {
             {/* 감성 바 */}
             <div className="mb-4">
               <div className="flex h-3 rounded-full overflow-hidden mb-1">
-                <div className="bg-green-400" style={{ width: `${pos}%` }} />
-                <div className="bg-gray-300 dark:bg-gray-600" style={{ width: `${neu}%` }} />
-                <div className="bg-red-400" style={{ width: `${neg}%` }} />
+                <div style={{ width: `${pos}%`, backgroundColor: SENTIMENT.pos }} />
+                <div style={{ width: `${neu}%`, backgroundColor: SENTIMENT.neu }} />
+                <div style={{ width: `${neg}%`, backgroundColor: SENTIMENT.neg }} />
               </div>
-              <div className="flex gap-3 text-xs text-gray-500 dark:text-gray-400">
-                <span className="text-green-500">긍정 {pos}%</span>
-                <span>중립 {neu}%</span>
-                <span className="text-red-500">부정 {neg}%</span>
+              <div className="flex gap-3 text-xs">
+                <span style={{ color: SENTIMENT.pos }}>긍정 {pos}%</span>
+                <span style={{ color: SENTIMENT.neu }}>중립 {neu}%</span>
+                <span style={{ color: SENTIMENT.neg }}>부정 {neg}%</span>
               </div>
             </div>
 

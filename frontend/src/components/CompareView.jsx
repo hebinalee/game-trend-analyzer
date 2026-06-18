@@ -2,9 +2,11 @@ import { useState } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
+import { SENTIMENT } from '../colors.js'
 
-const COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444']
+const COLORS = ['#8b5cf6', '#06b6d4', '#f97316', '#ec4899']
 const GRID_COLS = ['', 'grid-cols-1', 'grid-cols-1 sm:grid-cols-2', 'grid-cols-1 sm:grid-cols-3', 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4']
+const S = SENTIMENT
 
 function SentimentBar({ positive, neutral, negative }) {
   const pos = Math.round((positive || 0) * 100)
@@ -13,19 +15,19 @@ function SentimentBar({ positive, neutral, negative }) {
   return (
     <div>
       <div className="flex rounded-full overflow-hidden h-2">
-        <div style={{ width: `${pos}%`, backgroundColor: "#22c55e" }} title={`긍정 ${pos}%`} />
-        <div style={{ width: `${neu}%`, backgroundColor: "#9ca3af" }} title={`중립 ${neu}%`} />
-        <div style={{ width: `${neg}%`, backgroundColor: "#ef4444" }} title={`부정 ${neg}%`} />
+        <div style={{ width: `${pos}%`, backgroundColor: S.pos }} title={`긍정 ${pos}%`} />
+        <div style={{ width: `${neu}%`, backgroundColor: S.neu }} title={`중립 ${neu}%`} />
+        <div style={{ width: `${neg}%`, backgroundColor: S.neg }} title={`부정 ${neg}%`} />
       </div>
       <div className="flex gap-3 mt-1.5">
-        <span className="flex items-center gap-1 text-xs" style={{ color: "#22c55e" }}>
-          <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: "#22c55e" }} />긍정 {pos}%
+        <span className="flex items-center gap-1 text-xs" style={{ color: S.pos }}>
+          <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: S.pos }} />긍정 {pos}%
         </span>
-        <span className="flex items-center gap-1 text-xs" style={{ color: "#9ca3af" }}>
-          <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: "#9ca3af" }} />중립 {neu}%
+        <span className="flex items-center gap-1 text-xs" style={{ color: S.neu }}>
+          <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: S.neu }} />중립 {neu}%
         </span>
-        <span className="flex items-center gap-1 text-xs" style={{ color: "#ef4444" }}>
-          <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: "#ef4444" }} />부정 {neg}%
+        <span className="flex items-center gap-1 text-xs" style={{ color: S.neg }}>
+          <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: S.neg }} />부정 {neg}%
         </span>
       </div>
     </div>
@@ -180,9 +182,9 @@ export default function CompareView({ results }) {
             <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 12 }} />
             <Tooltip formatter={(v, name) => [`${v}%`, name]} />
             <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Bar dataKey="긍정" stackId="a" fill={"#22c55e"} />
-            <Bar dataKey="중립" stackId="a" fill={"#9ca3af"} />
-            <Bar dataKey="부정" stackId="a" fill={"#ef4444"} radius={[0, 4, 4, 0]} />
+            <Bar dataKey="긍정" stackId="a" fill={S.pos} />
+            <Bar dataKey="중립" stackId="a" fill={S.neu} />
+            <Bar dataKey="부정" stackId="a" fill={S.neg} radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
