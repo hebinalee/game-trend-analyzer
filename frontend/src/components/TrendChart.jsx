@@ -1,6 +1,7 @@
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
+import { SENTIMENT } from '../colors.js'
 
 export default function TrendChart({ data }) {
   if (!data || data.length === 0) {
@@ -22,9 +23,9 @@ export default function TrendChart({ data }) {
         <YAxis unit="%" tick={{ fontSize: 12 }} domain={[0, 100]} />
         <Tooltip formatter={(v) => `${v}%`} />
         <Legend />
-        <Line type="monotone" dataKey="긍정" stroke="#22c55e" strokeWidth={2} dot={false} />
-        <Line type="monotone" dataKey="중립" stroke="#9ca3af" strokeWidth={2} dot={false} />
-        <Line type="monotone" dataKey="부정" stroke="#ef4444" strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="긍정" stroke={SENTIMENT.pos} strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="중립" stroke={SENTIMENT.neu} strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="부정" stroke={SENTIMENT.neg} strokeWidth={2} dot={false} />
       </LineChart>
     </ResponsiveContainer>
   )
