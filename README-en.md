@@ -5,6 +5,19 @@
 
 A dashboard service that collects and analyzes daily user reviews and official news from the top 10 Steam games, giving game operators, designers, and marketers an at-a-glance view of community trends.
 
+## Tech Stack
+
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-D71F00?logo=sqlalchemy&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-06B6D4?logo=tailwindcss&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker_Compose-2496ED?logo=docker&logoColor=white)
+![Claude](https://img.shields.io/badge/Claude_API-Sonnet_4-D97757?logo=anthropic&logoColor=white)
+![Slack](https://img.shields.io/badge/Slack-Alerts-4A154B?logo=slack&logoColor=white)
+
 ## Requirements
 
 - Docker & Docker Compose

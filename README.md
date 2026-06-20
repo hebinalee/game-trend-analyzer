@@ -6,6 +6,19 @@
 Steam 인기 게임 10개를 대상으로 매일 유저 리뷰와 공식 뉴스를 수집·분석하여
 게임 운영자/기획자/마케터가 커뮤니티 동향을 한눈에 파악할 수 있는 대시보드 서비스입니다.
 
+## 기술 스택
+
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-D71F00?logo=sqlalchemy&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-06B6D4?logo=tailwindcss&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker_Compose-2496ED?logo=docker&logoColor=white)
+![Claude](https://img.shields.io/badge/Claude_API-Sonnet_4-D97757?logo=anthropic&logoColor=white)
+![Slack](https://img.shields.io/badge/Slack-알림-4A154B?logo=slack&logoColor=white)
+
 ## 요구사항
 
 - Docker & Docker Compose
