@@ -1,3 +1,6 @@
+[![한국어](https://img.shields.io/badge/언어-한국어-blue)](README.md)
+[![English](https://img.shields.io/badge/Language-English-blue)](README-en.md)
+
 # Game Trend Analyzer
 
 Steam 인기 게임 10개를 대상으로 매일 유저 리뷰와 공식 뉴스를 수집·분석하여
