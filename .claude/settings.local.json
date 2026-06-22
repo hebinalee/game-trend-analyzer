@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(node -e ':*)",
+      "Bash(pip install:*)",
+      "Bash(python3:*)",
+      "Bash(conda --version)",
+      "Bash(conda create:*)",
+      "Bash(/home/hebinalee/miniconda3/envs/game-trend/bin/pip install:*)",
+      "Bash(/home/hebinalee/miniconda3/envs/game-trend/bin/python:*)",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(npx vite:*)",
+      "Bash(lsof -ti:5173)",
+      "Bash(xargs kill:*)",
+      "Bash(lsof -ti:5174)",
+      "Bash(ls:*)"
+    ]
+  }
+}
