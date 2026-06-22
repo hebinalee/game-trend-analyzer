@@ -14,10 +14,16 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from config import settings
 from database import async_session
-from crawler.steam_community import crawl_all_games
+from crawler.steam_community import SteamCommunityCrawler
+from crawler.naver_game_lounge import NaverGameLoungeCrawler
 from analyzer.llm_analyzer import analyze_all_games
 from detector.anomaly_detector import detect_all_games
 from notifier.slack_notifier import retry_failed_notifications
+
+_crawlers = [
+    SteamCommunityCrawler(),
+    NaverGameLoungeCrawler(),
+]
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +31,11 @@ scheduler = AsyncIOScheduler(timezone="Asia/Seoul")
 
 
 async def _crawl_task():
-    async with async_session() as session:
-        logger.info("스케줄 크롤링 시작")
-        await crawl_all_games(session)
-        logger.info("스케줄 크롤링 완료")
+    for crawler in _crawlers:
+        async with async_session() as session:
+            logger.info(f"[{crawler.platform}] 크롤링 시작")
+            await crawler.crawl_all_games(session)
+            logger.info(f"[{crawler.platform}] 크롤링 완료")
 
     # 크롤링 완료 후 즉시 이상 감지 실행
     async with async_session() as session:

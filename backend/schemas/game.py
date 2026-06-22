@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 
 class GameBase(BaseModel):
+    platform: str = "steam"
     name: str
     app_id: str
     thumbnail_url: str | None = None

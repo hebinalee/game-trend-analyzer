@@ -279,6 +279,52 @@ python scripts/qa_pipeline.py --game "Elden Ring" --days 14 --interactive
 
 ---
 
+## 2026-06-23 — 멀티 플랫폼 데이터 소스 확장 (feature/multi-platform-sources)
+
+**배경:** 기존 서비스는 Steam PC 게임만 커버했다. 한국 시장에서는 네이버 게임 라운지 기반의 모바일 게임이 큰 비중을 차지하므로 수집 범위를 확장할 필요가 생겼다. 또한 초기(2026-04-04)에 Playwright 기반으로 개발했다가 Steam API로 교체했던 네이버 크롤러를 더 안정적인 REST API 방식으로 재도입했다.
+
+**설계 결정 — 플러그인 크롤러 아키텍처:**
+
+| 항목 | 기존 | 변경 후 |
+|------|------|---------|
+| 지원 플랫폼 | Steam (PC) 단일 | Steam + 네이버 게임 라운지 (모바일/온라인) |
+| 크롤러 구조 | 단일 모듈 함수 | `BaseCrawler` 추상 클래스 기반 플러그인 |
+| Game 식별자 | `app_id` 단독 unique | `(platform, app_id)` 복합 unique |
+| Post 출처 | 암묵적 (Steam 전용) | `source` 필드 명시 |
+| LLM 프롬프트 | "Steam 커뮤니티" 고정 | 플랫폼별 레이블 동적 치환 |
+
+**변경된 파일:**
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `backend/models/game.py` | `platform` 필드 추가, unique 제약 `app_id` → `(platform, app_id)` |
+| `backend/models/post.py` | `source` 필드 추가, `post_id` 길이 100 → 150 |
+| `backend/database.py` | SEED_GAMES에 `platform` 키 추가, 네이버 모바일 게임 5종 시드 추가, `init_db` upsert 로직 개선 |
+| `backend/crawler/base_crawler.py` *(신규)* | `BaseCrawler` 추상 클래스 — 공통 DB 저장 로직 포함 |
+| `backend/crawler/naver_game_lounge.py` *(신규)* | 네이버 게임 라운지 커뮤니티·공지 크롤러 (httpx REST API) |
+| `backend/crawler/steam_community.py` | `SteamCommunityCrawler` 클래스로 리팩토링, `source="steam"` 추가 |
+| `backend/analyzer/llm_analyzer.py` | 프롬프트 멀티 플랫폼 인식, `_PLATFORM_LABELS` 맵 추가 |
+| `backend/scheduler/jobs.py` | `_crawlers` 리스트로 플랫폼별 크롤러 순회 실행 |
+| `backend/schemas/game.py` | `platform` 필드 API 응답에 노출 |
+
+**신규 추가된 모바일/온라인 게임 시드:**
+
+| 게임명 | lounge_id | 플랫폼 |
+|--------|-----------|--------|
+| 리니지M | lineagem | naver |
+| 메이플스토리M | maplestorym | naver |
+| 배틀그라운드 모바일 | pubgmobile | naver |
+| 원신 | genshin | naver |
+| 로스트아크 | lostark | naver |
+
+**확장 구조 — 새 플랫폼 추가 방법:**
+1. `crawler/base_crawler.py`의 `BaseCrawler`를 상속한 크롤러 작성
+2. `database.py`의 `SEED_GAMES`에 `{"platform": "new_platform", ...}` 항목 추가
+3. `analyzer/llm_analyzer.py`의 `_PLATFORM_LABELS`에 레이블 등록
+4. `scheduler/jobs.py`의 `_crawlers` 리스트에 인스턴스 추가
+
+---
+
 ## 현재 상태 및 미결 사항
 
 | 항목 | 상태 |
@@ -287,6 +333,6 @@ python scripts/qa_pipeline.py --game "Elden Ring" --days 14 --interactive
 | 이상 감지 + Slack 알림 | 완료 |
 | 커스텀 게임 모드 (POC) | 완료 |
 | Live Ops Advisor (Tool Use) | 완료 |
-| Game Ops Portal 프론트엔드 | 개발 중 (feature/portal 브랜치) |
-| `.env` 설정 변경 | 미커밋 (staged) |
-| `backend/config.py` 외 다수 파일 수정 | 미커밋 (staged) |
+| Game Ops Portal 프론트엔드 | 완료 (feature/portal 머지) |
+| 멀티 플랫폼 소스 확장 | 개발 중 (feature/multi-platform-sources) |
+| 네이버 라운지 API 엔드포인트 검증 | 미완료 (실 환경 테스트 필요) |

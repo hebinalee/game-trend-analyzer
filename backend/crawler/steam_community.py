@@ -9,12 +9,10 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 import httpx
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from models.game import Game
-from models.post import Post
+from crawler.base_crawler import BaseCrawler
 from crawler.utils import random_delay, clean_text
+from models.game import Game
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +45,7 @@ async def _fetch_reviews(app_id: str, days_back: int = 1) -> list[dict]:
                     continue
                 posts.append({
                     "post_id": f"{app_id}_review_{review['recommendationid']}",
+                    "source": "steam",
                     "title": "Recommended" if review.get("voted_up") else "Not Recommended",
                     "content": clean_text(review.get("review", "")),
                     "author": review.get("author", {}).get("steamid", "unknown"),
@@ -81,6 +80,7 @@ async def _fetch_news(app_id: str, days_back: int = 1) -> list[dict]:
                     continue
                 posts.append({
                     "post_id": f"{app_id}_news_{item['gid']}",
+                    "source": "steam",
                     "title": clean_text(item.get("title", ""), 500),
                     "content": clean_text(item.get("contents", "")),
                     "author": clean_text(item.get("author", "Steam"), 100),
@@ -94,48 +94,22 @@ async def _fetch_news(app_id: str, days_back: int = 1) -> list[dict]:
     return posts
 
 
-async def crawl_game(game: Game, days_back: int = 1) -> list[dict]:
-    """
-    특정 Steam 게임의 최근 리뷰와 뉴스를 수집한다.
-    반환: Post 생성에 필요한 dict 리스트
-    """
-    logger.info(f"[{game.name}] Steam 데이터 수집 시작 (app_id={game.app_id})")
-    reviews = await _fetch_reviews(game.app_id, days_back)
-    await random_delay(1, 2)
-    news = await _fetch_news(game.app_id, days_back)
-    posts = reviews + news
-    logger.info(f"[{game.name}] 수집 완료: 리뷰 {len(reviews)}개, 뉴스 {len(news)}개")
-    return posts
+class SteamCommunityCrawler(BaseCrawler):
+    """Steam 커뮤니티 크롤러."""
+
+    platform = "steam"
+
+    async def crawl_game(self, game: Game, days_back: int = 1) -> list[dict]:
+        logger.info(f"[{game.name}] Steam 데이터 수집 시작 (app_id={game.app_id})")
+        reviews = await _fetch_reviews(game.app_id, days_back)
+        await random_delay(1, 2)
+        news = await _fetch_news(game.app_id, days_back)
+        posts = reviews + news
+        logger.info(f"[{game.name}] 수집 완료: 리뷰 {len(reviews)}개, 뉴스 {len(news)}개")
+        return posts
 
 
-async def crawl_all_games(db_session: AsyncSession, days_back: int = 1) -> None:
-    """
-    DB의 모든 active 게임에 대해 crawl_game을 순차 실행하고 DB에 저장한다.
-    """
-    result = await db_session.execute(select(Game).where(Game.is_active == True))
-    games = result.scalars().all()
-
-    for game in games:
-        try:
-            posts_data = await crawl_game(game, days_back=days_back)
-
-            for post_dict in posts_data:
-                existing = await db_session.execute(
-                    select(Post).where(Post.post_id == post_dict["post_id"])
-                )
-                if existing.scalar_one_or_none():
-                    continue
-                db_session.add(Post(
-                    game_id=game.id,
-                    crawled_at=datetime.utcnow(),
-                    **post_dict,
-                ))
-
-            await db_session.commit()
-            logger.info(f"[{game.name}] DB 저장 완료")
-
-        except Exception as e:
-            await db_session.rollback()
-            logger.error(f"[{game.name}] DB 저장 오류: {e}")
-
-        await random_delay(1, 3)
+# 하위 호환: scheduler 등에서 직접 호출하던 모듈 함수 유지
+_steam_crawler = SteamCommunityCrawler()
+crawl_game = _steam_crawler.crawl_game
+crawl_all_games = _steam_crawler.crawl_all_games

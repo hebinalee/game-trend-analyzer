@@ -279,6 +279,52 @@ Composed of a sidebar and a tab selection area.
 
 ---
 
+## 2026-06-23 — Multi-Platform Data Source Expansion (feature/multi-platform-sources)
+
+**Background:** The service previously covered Steam PC games only. In the Korean market, mobile and online games on Naver Game Lounge represent a significant segment. This change re-introduces a Naver crawler — originally built with Playwright in April 2026 and later dropped — using a more stable REST API approach, and establishes an extensible plugin architecture for future platforms.
+
+**Design Decision — Plugin Crawler Architecture:**
+
+| Aspect | Before | After |
+|--------|--------|-------|
+| Supported platforms | Steam (PC) only | Steam + Naver Game Lounge (mobile/online) |
+| Crawler structure | Single-module functions | `BaseCrawler` abstract class, plugin pattern |
+| Game identifier uniqueness | `app_id` alone | `(platform, app_id)` composite unique |
+| Post source | Implicit (Steam-only) | Explicit `source` field |
+| LLM prompt | Hardcoded "Steam community" | Dynamic platform label substitution |
+
+**Changed Files:**
+
+| File | Change |
+|------|--------|
+| `backend/models/game.py` | Added `platform` field; unique constraint changed from `app_id` to `(platform, app_id)` |
+| `backend/models/post.py` | Added `source` field; `post_id` length extended from 100 to 150 |
+| `backend/database.py` | Added `platform` key to SEED_GAMES, seeded 5 Naver mobile games, improved `init_db` upsert logic |
+| `backend/crawler/base_crawler.py` *(new)* | `BaseCrawler` abstract class with shared DB save logic |
+| `backend/crawler/naver_game_lounge.py` *(new)* | Naver Game Lounge community & notice crawler (httpx REST API) |
+| `backend/crawler/steam_community.py` | Refactored to `SteamCommunityCrawler` class; added `source="steam"` to posts |
+| `backend/analyzer/llm_analyzer.py` | Multi-platform aware prompt, added `_PLATFORM_LABELS` map |
+| `backend/scheduler/jobs.py` | Iterates `_crawlers` list to run all platform crawlers sequentially |
+| `backend/schemas/game.py` | Exposed `platform` field in API responses |
+
+**Newly Seeded Mobile/Online Games:**
+
+| Game | lounge_id | Platform |
+|------|-----------|----------|
+| Lineage M | lineagem | naver |
+| MapleStory M | maplestorym | naver |
+| PUBG Mobile | pubgmobile | naver |
+| Genshin Impact | genshin | naver |
+| Lost Ark | lostark | naver |
+
+**How to Add a New Platform:**
+1. Extend `BaseCrawler` from `crawler/base_crawler.py` and implement `crawl_game()`
+2. Add `{"platform": "new_platform", ...}` entries to `SEED_GAMES` in `database.py`
+3. Register a display label in `_PLATFORM_LABELS` in `analyzer/llm_analyzer.py`
+4. Append an instance to the `_crawlers` list in `scheduler/jobs.py`
+
+---
+
 ## Current Status and Open Items
 
 | Item | Status |
@@ -287,6 +333,6 @@ Composed of a sidebar and a tab selection area.
 | Anomaly detection + Slack notifications | Complete |
 | Custom game mode (POC) | Complete |
 | Live Ops Advisor (Tool Use) | Complete |
-| Game Ops Portal frontend | In progress (feature/portal branch) |
-| `.env` config changes | Uncommitted (staged) |
-| `backend/config.py` and other backend files | Uncommitted (staged) |
+| Game Ops Portal frontend | Complete (feature/portal merged) |
+| Multi-platform source expansion | In progress (feature/multi-platform-sources) |
+| Naver Game Lounge API endpoint verification | Pending (requires live environment testing) |
