@@ -281,13 +281,27 @@ Composed of a sidebar and a tab selection area.
 
 ## 2026-06-23 — Multi-Platform Data Source Expansion (feature/multi-platform-sources)
 
-**Background:** The service previously covered Steam PC games only. In the Korean market, mobile and online games on Naver Game Lounge represent a significant segment. This change re-introduces a Naver crawler — originally built with Playwright in April 2026 and later dropped — using a more stable REST API approach, and establishes an extensible plugin architecture for future platforms.
+**Background:** The service previously covered Steam PC games only. To extend coverage to mobile and cross-platform games, a second data source was introduced.
+
+**Platform Source Evaluation:**
+
+Naver Game Lounge was initially considered but rejected in favor of Reddit:
+
+| Aspect | Naver Game Lounge | Reddit (chosen) |
+|--------|-----------------|----------------|
+| API | Unofficial internal API (breakage risk) | Official OAuth2 API |
+| Coverage | Korean games only | Global, all genres |
+| Auth | None required | Client ID/Secret (free registration) |
+| Data quality | Community posts only | score (upvotes) + comment_count |
+| Stability | Low (prior Playwright incident) | High |
+
+→ **Reddit** selected for its official API, global coverage, and active mobile game subreddits.
 
 **Design Decision — Plugin Crawler Architecture:**
 
 | Aspect | Before | After |
 |--------|--------|-------|
-| Supported platforms | Steam (PC) only | Steam + Naver Game Lounge (mobile/online) |
+| Supported platforms | Steam (PC) only | Steam + Reddit (mobile/cross-platform) |
 | Crawler structure | Single-module functions | `BaseCrawler` abstract class, plugin pattern |
 | Game identifier uniqueness | `app_id` alone | `(platform, app_id)` composite unique |
 | Post source | Implicit (Steam-only) | Explicit `source` field |
@@ -299,23 +313,31 @@ Composed of a sidebar and a tab selection area.
 |------|--------|
 | `backend/models/game.py` | Added `platform` field; unique constraint changed from `app_id` to `(platform, app_id)` |
 | `backend/models/post.py` | Added `source` field; `post_id` length extended from 100 to 150 |
-| `backend/database.py` | Added `platform` key to SEED_GAMES, seeded 5 Naver mobile games, improved `init_db` upsert logic |
+| `backend/database.py` | Added `platform` key to SEED_GAMES, seeded 5 Reddit mobile games, improved `init_db` upsert logic |
 | `backend/crawler/base_crawler.py` *(new)* | `BaseCrawler` abstract class with shared DB save logic |
-| `backend/crawler/naver_game_lounge.py` *(new)* | Naver Game Lounge community & notice crawler (httpx REST API) |
+| `backend/crawler/reddit_community.py` *(new)* | Reddit OAuth2 subreddit crawler; classifies posts as news by flair |
 | `backend/crawler/steam_community.py` | Refactored to `SteamCommunityCrawler` class; added `source="steam"` to posts |
 | `backend/analyzer/llm_analyzer.py` | Multi-platform aware prompt, added `_PLATFORM_LABELS` map |
 | `backend/scheduler/jobs.py` | Iterates `_crawlers` list to run all platform crawlers sequentially |
 | `backend/schemas/game.py` | Exposed `platform` field in API responses |
+| `backend/config.py` | Added `reddit_client_id`, `reddit_client_secret` settings |
+| `.env.example` | Added Reddit OAuth2 credential entries |
 
-**Newly Seeded Mobile/Online Games:**
+**Newly Seeded Reddit Games:**
 
-| Game | lounge_id | Platform |
-|------|-----------|----------|
-| Lineage M | lineagem | naver |
-| MapleStory M | maplestorym | naver |
-| PUBG Mobile | pubgmobile | naver |
-| Genshin Impact | genshin | naver |
-| Lost Ark | lostark | naver |
+| Game | Subreddit | Genre |
+|------|-----------|-------|
+| Genshin Impact | r/Genshin_Impact | Mobile/PC RPG |
+| Lost Ark | r/lostarkgame | PC MMORPG |
+| PUBG Mobile | r/PUBGMobile | Mobile battle royale |
+| Clash of Clans | r/ClashOfClans | Mobile strategy |
+| Clash Royale | r/ClashRoyale | Mobile card game |
+
+**Reddit Crawler Behavior:**
+- Fetches an access token via OAuth2 `client_credentials` (valid for 1 hour)
+- Collects up to 100 recent posts from `r/{subreddit}/new`
+- Posts with flair containing patch/update/announcement → `post_type="news"`; others → `"community"`
+- If `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` are not set, logs a warning and skips silently
 
 **How to Add a New Platform:**
 1. Extend `BaseCrawler` from `crawler/base_crawler.py` and implement `crawl_game()`

@@ -281,13 +281,27 @@ python scripts/qa_pipeline.py --game "Elden Ring" --days 14 --interactive
 
 ## 2026-06-23 — 멀티 플랫폼 데이터 소스 확장 (feature/multi-platform-sources)
 
-**배경:** 기존 서비스는 Steam PC 게임만 커버했다. 한국 시장에서는 네이버 게임 라운지 기반의 모바일 게임이 큰 비중을 차지하므로 수집 범위를 확장할 필요가 생겼다. 또한 초기(2026-04-04)에 Playwright 기반으로 개발했다가 Steam API로 교체했던 네이버 크롤러를 더 안정적인 REST API 방식으로 재도입했다.
+**배경:** 기존 서비스는 Steam PC 게임만 커버했다. 모바일/크로스플랫폼 게임까지 수집 범위를 확장하기 위해 두 번째 플랫폼 소스를 추가했다.
+
+**플랫폼 소스 선정 과정:**
+
+초기 후보로 네이버 게임 라운지를 검토했으나 아래 이유로 Reddit으로 결정:
+
+| 항목 | 네이버 게임 라운지 | Reddit (선택) |
+|------|-----------------|--------------|
+| API | 비공식 내부 API (구조 변경 리스크) | 공식 OAuth2 API |
+| 커버리지 | 한국어 게임 한정 | 글로벌 전 장르 |
+| 인증 | 불필요 | Client ID/Secret (무료 등록) |
+| 데이터 품질 | 커뮤니티 글 | score(추천수) + comment_count 제공 |
+| 안정성 | 낮음 (Playwright 교체 전례 있음) | 높음 |
+
+→ 공식 API, 글로벌 커버리지, 모바일 게임 서브레딧 활성화 수준을 고려해 **Reddit** 채택.
 
 **설계 결정 — 플러그인 크롤러 아키텍처:**
 
 | 항목 | 기존 | 변경 후 |
 |------|------|---------|
-| 지원 플랫폼 | Steam (PC) 단일 | Steam + 네이버 게임 라운지 (모바일/온라인) |
+| 지원 플랫폼 | Steam (PC) 단일 | Steam + Reddit (모바일/크로스플랫폼) |
 | 크롤러 구조 | 단일 모듈 함수 | `BaseCrawler` 추상 클래스 기반 플러그인 |
 | Game 식별자 | `app_id` 단독 unique | `(platform, app_id)` 복합 unique |
 | Post 출처 | 암묵적 (Steam 전용) | `source` 필드 명시 |
@@ -299,23 +313,31 @@ python scripts/qa_pipeline.py --game "Elden Ring" --days 14 --interactive
 |------|----------|
 | `backend/models/game.py` | `platform` 필드 추가, unique 제약 `app_id` → `(platform, app_id)` |
 | `backend/models/post.py` | `source` 필드 추가, `post_id` 길이 100 → 150 |
-| `backend/database.py` | SEED_GAMES에 `platform` 키 추가, 네이버 모바일 게임 5종 시드 추가, `init_db` upsert 로직 개선 |
+| `backend/database.py` | SEED_GAMES에 `platform` 키 추가, Reddit 모바일 게임 5종 시드 추가, `init_db` upsert 로직 개선 |
 | `backend/crawler/base_crawler.py` *(신규)* | `BaseCrawler` 추상 클래스 — 공통 DB 저장 로직 포함 |
-| `backend/crawler/naver_game_lounge.py` *(신규)* | 네이버 게임 라운지 커뮤니티·공지 크롤러 (httpx REST API) |
+| `backend/crawler/reddit_community.py` *(신규)* | Reddit OAuth2 기반 서브레딧 크롤러, flair로 news 분류 |
 | `backend/crawler/steam_community.py` | `SteamCommunityCrawler` 클래스로 리팩토링, `source="steam"` 추가 |
 | `backend/analyzer/llm_analyzer.py` | 프롬프트 멀티 플랫폼 인식, `_PLATFORM_LABELS` 맵 추가 |
 | `backend/scheduler/jobs.py` | `_crawlers` 리스트로 플랫폼별 크롤러 순회 실행 |
 | `backend/schemas/game.py` | `platform` 필드 API 응답에 노출 |
+| `backend/config.py` | `reddit_client_id`, `reddit_client_secret` 설정 추가 |
+| `.env.example` | Reddit OAuth2 자격증명 항목 추가 |
 
-**신규 추가된 모바일/온라인 게임 시드:**
+**신규 추가된 Reddit 게임 시드:**
 
-| 게임명 | lounge_id | 플랫폼 |
-|--------|-----------|--------|
-| 리니지M | lineagem | naver |
-| 메이플스토리M | maplestorym | naver |
-| 배틀그라운드 모바일 | pubgmobile | naver |
-| 원신 | genshin | naver |
-| 로스트아크 | lostark | naver |
+| 게임명 | subreddit | 장르 |
+|--------|-----------|------|
+| Genshin Impact | r/Genshin_Impact | 모바일/PC RPG |
+| Lost Ark | r/lostarkgame | PC MMORPG |
+| PUBG Mobile | r/PUBGMobile | 모바일 배틀로얄 |
+| Clash of Clans | r/ClashOfClans | 모바일 전략 |
+| Clash Royale | r/ClashRoyale | 모바일 카드 |
+
+**Reddit 크롤러 동작 방식:**
+- OAuth2 `client_credentials` 방식으로 토큰 발급 (1시간 유효)
+- `r/{subreddit}/new?limit=100` 으로 최신 글 수집
+- flair에 patch/update/announcement 등 포함 → `post_type="news"`, 나머지 → `"community"`
+- `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` 미설정 시 경고 로그 후 조용히 건너뜀
 
 **확장 구조 — 새 플랫폼 추가 방법:**
 1. `crawler/base_crawler.py`의 `BaseCrawler`를 상속한 크롤러 작성

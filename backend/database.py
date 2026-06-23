@@ -39,13 +39,13 @@ SEED_GAMES = [
     {"platform": "steam", "name": "Valheim", "app_id": "892970", "thumbnail_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/892970/header.jpg"},
     {"platform": "steam", "name": "Terraria", "app_id": "105600", "thumbnail_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/105600/header.jpg"},
     {"platform": "steam", "name": "Team Fortress 2", "app_id": "440", "thumbnail_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/440/header.jpg"},
-    # --- 네이버 게임 라운지 (모바일/온라인 게임) ---
-    # app_id = 네이버 게임 라운지 lounge_id
-    {"platform": "naver", "name": "리니지M", "app_id": "lineagem", "thumbnail_url": "https://game.naver.com/static/game_detail/lineagem/hero_image.jpg"},
-    {"platform": "naver", "name": "메이플스토리M", "app_id": "maplestorym", "thumbnail_url": "https://game.naver.com/static/game_detail/maplestorym/hero_image.jpg"},
-    {"platform": "naver", "name": "배틀그라운드 모바일", "app_id": "pubgmobile", "thumbnail_url": "https://game.naver.com/static/game_detail/pubgmobile/hero_image.jpg"},
-    {"platform": "naver", "name": "원신", "app_id": "genshin", "thumbnail_url": "https://game.naver.com/static/game_detail/genshin/hero_image.jpg"},
-    {"platform": "naver", "name": "로스트아크", "app_id": "lostark", "thumbnail_url": "https://game.naver.com/static/game_detail/lostark/hero_image.jpg"},
+    # --- Reddit 커뮤니티 (모바일/크로스플랫폼 게임) ---
+    # app_id = subreddit 이름 (r/{app_id})
+    {"platform": "reddit", "name": "Genshin Impact", "app_id": "Genshin_Impact", "thumbnail_url": "https://www.redditstatic.com/desktop2x/img/snoovatars/snoo.png"},
+    {"platform": "reddit", "name": "Lost Ark", "app_id": "lostarkgame", "thumbnail_url": "https://www.redditstatic.com/desktop2x/img/snoovatars/snoo.png"},
+    {"platform": "reddit", "name": "PUBG Mobile", "app_id": "PUBGMobile", "thumbnail_url": "https://www.redditstatic.com/desktop2x/img/snoovatars/snoo.png"},
+    {"platform": "reddit", "name": "Clash of Clans", "app_id": "ClashOfClans", "thumbnail_url": "https://www.redditstatic.com/desktop2x/img/snoovatars/snoo.png"},
+    {"platform": "reddit", "name": "Clash Royale", "app_id": "ClashRoyale", "thumbnail_url": "https://www.redditstatic.com/desktop2x/img/snoovatars/snoo.png"},
 ]
 
 
