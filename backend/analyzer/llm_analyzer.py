@@ -46,7 +46,7 @@ Steam 리뷰의 "Recommended"/"Not Recommended", 네이버 라운지의 추천�
 
 _PLATFORM_LABELS = {
     "steam": "Steam 커뮤니티",
-    "naver": "네이버 게임 라운지",
+    "reddit": "Reddit 커뮤니티",
     "appstore": "App Store",
     "playstore": "Google Play",
 }

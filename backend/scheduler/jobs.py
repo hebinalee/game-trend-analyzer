@@ -15,14 +15,14 @@ from apscheduler.triggers.interval import IntervalTrigger
 from config import settings
 from database import async_session
 from crawler.steam_community import SteamCommunityCrawler
-from crawler.naver_game_lounge import NaverGameLoungeCrawler
+from crawler.reddit_community import RedditCommunityCrawler
 from analyzer.llm_analyzer import analyze_all_games
 from detector.anomaly_detector import detect_all_games
 from notifier.slack_notifier import retry_failed_notifications
 
 _crawlers = [
     SteamCommunityCrawler(),
-    NaverGameLoungeCrawler(),
+    RedditCommunityCrawler(),
 ]
 
 logger = logging.getLogger(__name__)
