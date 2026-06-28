@@ -40,3 +40,9 @@ export const getAlertsUnreadCount = () =>
 
 export const askLiveOpsAdvisor = (gameId, question) =>
   api.post('/live-ops-advisor', { game_id: gameId, question }).then(r => r.data)
+
+export const getPosts = (gameId, { source, daysBack = 1, limit = 50 } = {}) => {
+  const params = { days_back: daysBack, limit }
+  if (source) params.source = source
+  return api.get(`/posts/${gameId}`, { params }).then(r => r.data)
+}

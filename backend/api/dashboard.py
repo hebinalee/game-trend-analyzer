@@ -29,6 +29,7 @@ async def get_dashboard_summary(db: AsyncSession = Depends(get_db)):
             DashboardSummaryItem(
                 game_id=game.id,
                 game_name=game.name,
+                platform=game.platform,
                 thumbnail_url=game.thumbnail_url,
                 summary=report.summary if report else None,
                 sentiment=report.sentiment if report else None,

@@ -347,6 +347,42 @@ Naver Game Lounge was initially considered but rejected in favor of Reddit:
 
 ---
 
+## 2026-06-28 — Reddit Data Collection Testing & Portal Integration (feature/multi-platform)
+
+**Background:** The multi-platform crawler was wired into the scheduler but the manual `trigger-crawl` endpoint only called the Steam crawler, and the frontend had no way to view posts by source or identify which platform a game belonged to.
+
+**Changes:**
+
+| File | Change |
+|------|--------|
+| `backend/main.py` | `trigger-crawl` now iterates all crawlers (`SteamCommunityCrawler` + `RedditCommunityCrawler`) instead of calling only the Steam function |
+| `backend/api/posts.py` *(new)* | `GET /api/posts/{game_id}` — returns collected posts filtered by `source`, `days_back`, `limit`; sorted by engagement (likes + comments) |
+| `backend/schemas/report.py` | Added `platform` field to `DashboardSummaryItem` |
+| `backend/api/dashboard.py` | Includes `game.platform` in dashboard summary response |
+| `frontend/src/api.js` | Added `getPosts(gameId, { source, daysBack, limit })` |
+| `frontend/src/components/ReportCard.jsx` | Platform badge (blue = Steam, orange = Reddit) shown below game name |
+| `frontend/src/pages/Dashboard.jsx` | Passes `platform` from summary API to `ReportCard` |
+| `frontend/src/pages/GameDetail.jsx` | Added "최근 게시글" (Recent Posts) tab with platform filter, period selector, and per-post badges |
+
+**New API Endpoint:**
+
+```
+GET /api/posts/{game_id}?source=reddit&days_back=1&limit=50
+```
+
+- `source`: `steam` or `reddit` (omit for all)
+- `days_back`: 1–30 (default 1)
+- `limit`: 1–200 (default 50)
+- Response sorted by `like_count + comment_count` descending
+
+**Portal "Recent Posts" Tab (`/game/:id`):**
+
+- Platform filter dropdown (All / Steam / Reddit)
+- Period selector (1 / 3 / 7 days)
+- Each post shows: source badge, post-type badge (Review / Notice / Community), title, content preview, likes, comments, author, date
+
+---
+
 ## Current Status and Open Items
 
 | Item | Status |
@@ -356,5 +392,5 @@ Naver Game Lounge was initially considered but rejected in favor of Reddit:
 | Custom game mode (POC) | Complete |
 | Live Ops Advisor (Tool Use) | Complete |
 | Game Ops Portal frontend | Complete (feature/portal merged) |
-| Multi-platform source expansion | In progress (feature/multi-platform-sources) |
-| Naver Game Lounge API endpoint verification | Pending (requires live environment testing) |
+| Multi-platform source expansion | Complete (feature/multi-platform) |
+| Reddit portal integration (posts tab + platform badge) | Complete |
