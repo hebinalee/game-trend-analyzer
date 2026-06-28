@@ -100,7 +100,7 @@ export default function Dashboard() {
           : items.map(item => (
             <ReportCard
               key={item.game_id}
-              game={{ id: item.game_id, name: item.game_name, thumbnail_url: item.thumbnail_url }}
+              game={{ id: item.game_id, name: item.game_name, platform: item.platform, thumbnail_url: item.thumbnail_url }}
               report={item.summary ? item : null}
               alertSeverity={alertsByGame[item.game_id] || null}
               onClick={() => navigate(`/game/${item.game_id}`)}

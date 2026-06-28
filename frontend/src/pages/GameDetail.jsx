@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { SENTIMENT } from '../colors.js'
-import { getGames, getReports, getLatestReport, compareGames } from '../api.js'
+import { getGames, getReports, getLatestReport, compareGames, getPosts } from '../api.js'
 import TrendChart from '../components/TrendChart.jsx'
 import CompareView from '../components/CompareView.jsx'
 import GameSelector from '../components/GameSelector.jsx'
@@ -141,7 +141,122 @@ function ReportTab({ game, report, history, allGames }) {
   )
 }
 
-// ── 탭2: AI 어드바이저 ─────────────────────────────────────────────────────────
+// ── 탭2: 최근 게시글 ───────────────────────────────────────────────────────────
+
+const SOURCE_LABELS = {
+  steam: { label: 'Steam', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+  reddit: { label: 'Reddit', className: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
+}
+
+const TYPE_LABELS = {
+  review: '리뷰',
+  news: '공지',
+  community: '커뮤니티',
+}
+
+function PostsTab({ game }) {
+  const [posts, setPosts] = useState([])
+  const [source, setSource] = useState('')
+  const [daysBack, setDaysBack] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const load = () => {
+    if (!game) return
+    setLoading(true)
+    setError(null)
+    getPosts(game.id, { source: source || undefined, daysBack })
+      .then(setPosts)
+      .catch(() => setError('게시글을 불러오지 못했습니다.'))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { if (game) load() }, [game])
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <h3 className="font-semibold text-lg">최근 수집 게시글</h3>
+        <div className="flex items-center gap-2 ml-auto">
+          <select
+            value={source}
+            onChange={e => setSource(e.target.value)}
+            className="px-2 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-gray-100"
+          >
+            <option value="">전체 플랫폼</option>
+            <option value="steam">Steam</option>
+            <option value="reddit">Reddit</option>
+          </select>
+          <select
+            value={daysBack}
+            onChange={e => setDaysBack(Number(e.target.value))}
+            className="px-2 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-gray-100"
+          >
+            <option value={1}>최근 1일</option>
+            <option value={3}>최근 3일</option>
+            <option value={7}>최근 7일</option>
+          </select>
+          <button
+            onClick={load}
+            className="px-3 py-1 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            조회
+          </button>
+        </div>
+      </div>
+
+      {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
+
+      {loading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="animate-pulse h-16 bg-gray-100 dark:bg-gray-700 rounded-lg" />
+          ))}
+        </div>
+      ) : posts.length === 0 ? (
+        <p className="text-sm text-gray-400 dark:text-gray-500 py-8 text-center">
+          수집된 게시글이 없습니다. 크롤링을 실행해 보세요.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {posts.map(post => {
+            const srcBadge = SOURCE_LABELS[post.source]
+            return (
+              <div key={post.id} className="flex flex-col gap-1 p-3 rounded-lg border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {srcBadge && (
+                    <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${srcBadge.className}`}>
+                      {srcBadge.label}
+                    </span>
+                  )}
+                  {post.post_type && (
+                    <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                      {TYPE_LABELS[post.post_type] || post.post_type}
+                    </span>
+                  )}
+                  <span className="text-sm font-medium truncate flex-1">{post.title || '(제목 없음)'}</span>
+                </div>
+                {post.content && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 pl-0.5">{post.content}</p>
+                )}
+                <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
+                  <span>👍 {post.like_count}</span>
+                  <span>💬 {post.comment_count}</span>
+                  {post.author && <span>by {post.author}</span>}
+                  {post.posted_at && (
+                    <span>{new Date(post.posted_at).toLocaleDateString('ko-KR')}</span>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── 탭3: AI 어드바이저 ─────────────────────────────────────────────────────────
 
 function AdvisorTab({ game }) {
   if (!game) return null
@@ -156,6 +271,7 @@ function AdvisorTab({ game }) {
 
 const TABS = [
   { id: 'report', label: '리포트' },
+  { id: 'posts', label: '최근 게시글' },
   { id: 'advisor', label: 'AI 어드바이저' },
 ]
 
@@ -227,6 +343,9 @@ export default function GameDetail() {
       <div className="lg:col-span-3">
         {activeTab === 'report' && (
           <ReportTab game={game} report={report} history={history} allGames={allGames} />
+        )}
+        {activeTab === 'posts' && (
+          <PostsTab game={game} />
         )}
         {activeTab === 'advisor' && (
           <AdvisorTab game={game} />

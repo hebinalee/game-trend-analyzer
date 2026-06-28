@@ -28,6 +28,7 @@ class ReportResponse(ReportBase):
 class DashboardSummaryItem(BaseModel):
     game_id: int
     game_name: str
+    platform: str = "steam"
     thumbnail_url: str | None = None
     summary: str | None = None
     sentiment: dict | None = None

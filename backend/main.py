@@ -11,7 +11,9 @@ from api.reports import router as reports_router
 from api.dashboard import router as dashboard_router
 from api.alerts import router as alerts_router
 from api.live_ops_advisor import router as live_ops_advisor_router
-from crawler.steam_community import crawl_all_games
+from api.posts import router as posts_router
+from crawler.steam_community import SteamCommunityCrawler
+from crawler.reddit_community import RedditCommunityCrawler
 from analyzer.llm_analyzer import analyze_all_games
 from detector.anomaly_detector import detect_all_games
 from notifier.slack_notifier import send_alert
@@ -48,14 +50,19 @@ app.include_router(reports_router)
 app.include_router(dashboard_router)
 app.include_router(alerts_router)
 app.include_router(live_ops_advisor_router)
+app.include_router(posts_router)
+
+
+_crawlers = [SteamCommunityCrawler(), RedditCommunityCrawler()]
 
 
 @app.post("/api/admin/trigger-crawl", tags=["admin"])
 async def trigger_crawl(background_tasks: BackgroundTasks, days_back: int = 1):
     """수동 크롤링 트리거. days_back으로 수집 기간(일) 지정 가능 (기본값: 1)"""
     async def _run():
-        async with async_session() as session:
-            await crawl_all_games(session, days_back=days_back)
+        for crawler in _crawlers:
+            async with async_session() as session:
+                await crawler.crawl_all_games(session, days_back=days_back)
 
     background_tasks.add_task(_run)
     return {"message": f"크롤링이 시작되었습니다. (최근 {days_back}일)"}

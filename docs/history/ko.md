@@ -347,6 +347,42 @@ python scripts/qa_pipeline.py --game "Elden Ring" --days 14 --interactive
 
 ---
 
+## 2026-06-28 — Reddit 데이터 수집 테스트 및 포털 통합 (feature/multi-platform)
+
+**배경:** 멀티 플랫폼 크롤러는 스케줄러에 연결되어 있었으나, 수동 `trigger-crawl` 엔드포인트가 Steam 크롤러만 호출했고, 프론트엔드에서는 게시글의 출처(source)를 구분하거나 게임의 플랫폼 정보를 표시할 수 없었다.
+
+**변경 내용:**
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `backend/main.py` | `trigger-crawl`이 Steam 함수만 호출하던 것을 `SteamCommunityCrawler` + `RedditCommunityCrawler` 순차 실행으로 변경 |
+| `backend/api/posts.py` *(신규)* | `GET /api/posts/{game_id}` — `source`, `days_back`, `limit` 파라미터로 수집 게시글 조회, 인기순(좋아요+댓글) 정렬 |
+| `backend/schemas/report.py` | `DashboardSummaryItem`에 `platform` 필드 추가 |
+| `backend/api/dashboard.py` | 대시보드 응답에 `game.platform` 포함 |
+| `frontend/src/api.js` | `getPosts(gameId, { source, daysBack, limit })` 함수 추가 |
+| `frontend/src/components/ReportCard.jsx` | 플랫폼 뱃지 추가 (파란색 = Steam, 주황색 = Reddit) |
+| `frontend/src/pages/Dashboard.jsx` | 대시보드 API의 `platform`을 `ReportCard`에 전달 |
+| `frontend/src/pages/GameDetail.jsx` | "최근 게시글" 탭 신규 추가 — 플랫폼 필터, 기간 선택, 게시글별 뱃지 표시 |
+
+**신규 API 엔드포인트:**
+
+```
+GET /api/posts/{game_id}?source=reddit&days_back=1&limit=50
+```
+
+- `source`: `steam` 또는 `reddit` (생략 시 전체)
+- `days_back`: 1~30 (기본 1)
+- `limit`: 1~200 (기본 50)
+- 응답: `like_count + comment_count` 합산 내림차순 정렬
+
+**포털 "최근 게시글" 탭 (`/game/:id`):**
+
+- 플랫폼 필터 드롭다운 (전체 / Steam / Reddit)
+- 수집 기간 선택 (1 / 3 / 7일)
+- 게시글마다 출처 뱃지, 유형 뱃지(리뷰/공지/커뮤니티), 제목, 내용 미리보기, 좋아요·댓글·작성자·날짜 표시
+
+---
+
 ## 현재 상태 및 미결 사항
 
 | 항목 | 상태 |
@@ -356,5 +392,5 @@ python scripts/qa_pipeline.py --game "Elden Ring" --days 14 --interactive
 | 커스텀 게임 모드 (POC) | 완료 |
 | Live Ops Advisor (Tool Use) | 완료 |
 | Game Ops Portal 프론트엔드 | 완료 (feature/portal 머지) |
-| 멀티 플랫폼 소스 확장 | 개발 중 (feature/multi-platform-sources) |
-| 네이버 라운지 API 엔드포인트 검증 | 미완료 (실 환경 테스트 필요) |
+| 멀티 플랫폼 소스 확장 | 완료 (feature/multi-platform) |
+| Reddit 포털 통합 (게시글 탭 + 플랫폼 뱃지) | 완료 |
