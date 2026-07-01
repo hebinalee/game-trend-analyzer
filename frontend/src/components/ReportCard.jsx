@@ -33,13 +33,18 @@ export default function ReportCard({ game, report, alertSeverity, onClick }) {
             src={game.thumbnail_url}
             alt={game.name}
             className="w-10 h-10 rounded-lg object-cover bg-gray-100"
-            onError={e => { e.target.style.display = 'none' }}
+            onError={e => {
+              e.target.style.display = 'none'
+              e.target.nextSibling.style.display = 'flex'
+            }}
           />
-        ) : (
-          <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-300 font-bold text-sm">
-            {game.name.slice(0, 2)}
-          </div>
-        )}
+        ) : null}
+        <div
+          className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900 items-center justify-center text-indigo-600 dark:text-indigo-300 font-bold text-sm"
+          style={{ display: game.thumbnail_url ? 'none' : 'flex' }}
+        >
+          {game.name.slice(0, 2)}
+        </div>
         <div className="flex flex-col gap-0.5 min-w-0">
           <h3 className="font-semibold text-base leading-tight truncate">{game.name}</h3>
           {game.platform && PLATFORM_BADGE[game.platform] && (

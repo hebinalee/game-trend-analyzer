@@ -15,7 +15,11 @@
       "Bash(lsof -ti:5173)",
       "Bash(xargs kill:*)",
       "Bash(lsof -ti:5174)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker-compose down:*)",
+      "Bash(curl -s -X POST \"http://localhost:8000/api/admin/trigger-crawl?days_back=3\")",
+      "Bash(curl -s \"http://localhost:8000/api/games\")"
     ]
   }
 }

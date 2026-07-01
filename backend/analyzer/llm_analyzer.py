@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = (
     "당신은 게임 운영 전문 애널리스트입니다. "
-    "Steam, 네이버 게임 라운지 등 다양한 플랫폼의 유저 리뷰와 공식 뉴스를 분석하여 "
+    "Steam, Reddit 등 다양한 플랫폼의 유저 리뷰와 공식 뉴스를 분석하여 "
     "운영자/기획자/마케터가 즉시 활용할 수 있는 인사이트를 한국어로 제공합니다."
 )
 
@@ -30,7 +30,7 @@ USER_PROMPT_TEMPLATE = """다음은 {platform_label} '{game_name}' 게임의 최
 {posts_text}
 
 위 데이터를 분석하여 아래 JSON 형식으로만 응답하세요. JSON 외의 텍스트는 포함하지 마세요.
-Steam 리뷰의 "Recommended"/"Not Recommended", 네이버 라운지의 추천수 등 플랫폼별 감정 신호를 sentiment 산정에 반영하세요.
+Steam 리뷰의 "Recommended"/"Not Recommended", Reddit의 upvote(score) 등 플랫폼별 감정 신호를 sentiment 산정에 반영하세요.
 
 {{
   "summary": "전체 동향 3~5줄 요약",
