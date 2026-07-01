@@ -4,6 +4,24 @@
 
 ---
 
+## Table of Contents
+
+- [2026-04-04 — Project Initialization](#2026-04-04--project-initialization)
+- [2026-04-11 — Crawler Replacement: Naver Game Lounge → Steam Community API](#2026-04-11--crawler-replacement-naver-game-lounge--steam-community-api)
+- [2026-04-12 — Standalone Report Generator and First Steam Trend Report](#2026-04-12--standalone-report-generator-and-first-steam-trend-report)
+- [2026-04-13 — Documentation Improvements](#2026-04-13--documentation-improvements)
+- [2026-04-15 — Proactive AI Agent Team Design and Implementation (PR #1)](#2026-04-15--proactive-ai-agent-team-design-and-implementation-pr-1)
+- [2026-04-19 — Slack Webhook Integration and API Reliability Fixes (PR #2)](#2026-04-19--slack-webhook-integration-and-api-reliability-fixes-pr-2)
+- [2026-04-23 — Custom Game Mode (PR #3)](#2026-04-23--custom-game-mode-pr-3)
+- [2026-04-23 — Agent E Design: Introducing the Operator Q&A Service](#2026-04-23--agent-e-design-introducing-the-operator-qa-service)
+- [2026-04-24 — Agent E: Live Ops Advisor (PR #4)](#2026-04-24--agent-e-live-ops-advisor-pr-4)
+- [2026-05-07 — Game Ops Portal Frontend](#2026-05-07--game-ops-portal-frontend-current-branch-featureportal)
+- [2026-06-23 — Multi-Platform Data Source Expansion](#2026-06-23--multi-platform-data-source-expansion-featuremulti-platform-sources)
+- [2026-06-28 — Reddit Data Collection Testing & Portal Integration](#2026-06-28--reddit-data-collection-testing--portal-integration-featuremulti-platform)
+- [Current Status and Open Items](#current-status-and-open-items)
+
+---
+
 ## 2026-04-04 — Project Initialization
 
 **Goal:** Build the foundational service to automatically collect and analyze game community trends and deliver reports.
