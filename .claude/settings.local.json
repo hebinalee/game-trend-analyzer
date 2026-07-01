@@ -18,8 +18,11 @@
       "Bash(ls:*)",
       "Bash(docker-compose up:*)",
       "Bash(docker-compose down:*)",
-      "Bash(curl -s -X POST \"http://localhost:8000/api/admin/trigger-crawl?days_back=3\")",
-      "Bash(curl -s \"http://localhost:8000/api/games\")"
+      "Bash(curl -s \"http://localhost:8000/api/*)",
+      "Bash(curl -s -X POST \"http://localhost:8000/api/*)",
+      "Bash(curl -sv \"http://localhost:8000/api/*)",
+      "Bash(docker-compose -f /mnt/d/code/agent/team_hebina/game-trend-analyzer/docker-compose.yml restart backend)",
+      "Bash(grep -Ev \"Counter-Strike|Dota 2$|PUBG: BATTLE|Elden Ring|Baldur|Rust|Cyberpunk|Valheim|Terraria\")"
     ]
   }
 }

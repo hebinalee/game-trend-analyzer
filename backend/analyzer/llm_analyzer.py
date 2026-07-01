@@ -30,7 +30,7 @@ USER_PROMPT_TEMPLATE = """다음은 {platform_label} '{game_name}' 게임의 최
 {posts_text}
 
 위 데이터를 분석하여 아래 JSON 형식으로만 응답하세요. JSON 외의 텍스트는 포함하지 마세요.
-Steam 리뷰의 "Recommended"/"Not Recommended", Reddit의 upvote(score) 등 플랫폼별 감정 신호를 sentiment 산정에 반영하세요.
+★ 평점(1~5), Steam 리뷰의 "Recommended"/"Not Recommended", Reddit upvote 등 플랫폼별 감정 신호를 sentiment 산정에 반영하세요.
 
 {{
   "summary": "전체 동향 3~5줄 요약",
@@ -46,9 +46,7 @@ Steam 리뷰의 "Recommended"/"Not Recommended", Reddit의 upvote(score) 등 플
 
 _PLATFORM_LABELS = {
     "steam": "Steam 커뮤니티",
-    "reddit": "Reddit 커뮤니티",
-    "appstore": "App Store",
-    "playstore": "Google Play",
+    "mobile": "모바일 커뮤니티 (Reddit · Google Play · App Store)",
 }
 
 
@@ -56,10 +54,17 @@ def _build_posts_text(posts: list[Post]) -> str:
     lines = []
     for i, post in enumerate(posts, 1):
         label = f"[{post.post_type.upper()}]" if post.post_type else ""
-        lines.append(f"[{i}] {label} {post.title or '(제목 없음)'}")
+        rating_str = f" ★{post.rating:.1f}" if post.rating is not None else ""
+        lines.append(f"[{i}] {label}{rating_str} {post.title or '(제목 없음)'}")
         if post.content:
             lines.append(f"    {post.content[:300]}")
-        lines.append(f"    좋아요: {post.like_count} | 댓글: {post.comment_count}")
+        meta_parts = []
+        if post.like_count is not None:
+            meta_parts.append(f"좋아요: {post.like_count}")
+        if post.comment_count is not None:
+            meta_parts.append(f"댓글: {post.comment_count}")
+        if meta_parts:
+            lines.append(f"    {' | '.join(meta_parts)}")
         lines.append("")
     return "\n".join(lines)
 
@@ -70,7 +75,7 @@ async def analyze_game_posts(game: Game, posts: list[Post]) -> dict:
     """
     # 50개 초과 시 인기순 상위 50개만 사용
     if len(posts) > 50:
-        posts = sorted(posts, key=lambda p: p.like_count + p.comment_count, reverse=True)[:50]
+        posts = sorted(posts, key=lambda p: (p.like_count or 0) + (p.comment_count or 0), reverse=True)[:50]
 
     posts_text = _build_posts_text(posts)
     platform_label = _PLATFORM_LABELS.get(getattr(game, "platform", "steam"), "커뮤니티")
@@ -83,7 +88,7 @@ async def analyze_game_posts(game: Game, posts: list[Post]) -> dict:
 
     client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
     message = await client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model="claude-sonnet-4-6",
         max_tokens=2048,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_prompt}],
@@ -110,6 +115,7 @@ async def analyze_all_games(db_session: AsyncSession) -> None:
     games = games_result.scalars().all()
 
     for game in games:
+        game_name = game.name  # rollback 후 expired 속성 접근 방지
         try:
             # 최근 24시간 수집된 게시글 조회
             cutoff_start = datetime.utcnow() - timedelta(hours=24)
@@ -124,10 +130,10 @@ async def analyze_all_games(db_session: AsyncSession) -> None:
             posts = posts_result.scalars().all()
 
             if not posts:
-                logger.info(f"[{game.name}] 분석할 게시글 없음, 건너뜀.")
+                logger.info(f"[{game_name}] 분석할 게시글 없음, 건너뜀.")
                 continue
 
-            logger.info(f"[{game.name}] {len(posts)}개 게시글 분석 시작")
+            logger.info(f"[{game_name}] {len(posts)}개 게시글 분석 시작")
             analysis = await analyze_game_posts(game, posts)
 
             # Upsert
@@ -155,9 +161,9 @@ async def analyze_all_games(db_session: AsyncSession) -> None:
             )
             await db_session.execute(stmt)
             await db_session.commit()
-            logger.info(f"[{game.name}] 리포트 저장 완료")
+            logger.info(f"[{game_name}] 리포트 저장 완료")
 
         except Exception as e:
             await db_session.rollback()
-            logger.error(f"[{game.name}] 분석 오류: {e}")
+            logger.error(f"[{game_name}] 분석 오류: {e}")
             continue

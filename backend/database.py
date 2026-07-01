@@ -39,18 +39,78 @@ SEED_GAMES = [
     {"platform": "steam", "name": "Valheim", "app_id": "892970", "thumbnail_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/892970/header.jpg"},
     {"platform": "steam", "name": "Terraria", "app_id": "105600", "thumbnail_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/105600/header.jpg"},
     {"platform": "steam", "name": "Team Fortress 2", "app_id": "440", "thumbnail_url": "https://cdn.cloudflare.steamstatic.com/steam/apps/440/header.jpg"},
-    # --- Reddit 커뮤니티 (모바일 인기 Top 10) ---
-    # app_id = subreddit 이름 (r/{app_id}), thumbnail_url은 프론트엔드 이니셜로 대체
-    {"platform": "reddit", "name": "Genshin Impact",    "app_id": "Genshin_Impact",     "thumbnail_url": None},
-    {"platform": "reddit", "name": "Clash of Clans",    "app_id": "ClashOfClans",        "thumbnail_url": None},
-    {"platform": "reddit", "name": "Pokémon GO",        "app_id": "pokemongo",           "thumbnail_url": None},
-    {"platform": "reddit", "name": "Brawl Stars",       "app_id": "Brawlstars",          "thumbnail_url": None},
-    {"platform": "reddit", "name": "Clash Royale",      "app_id": "ClashRoyale",         "thumbnail_url": None},
-    {"platform": "reddit", "name": "PUBG Mobile",       "app_id": "PUBGMobile",          "thumbnail_url": None},
-    {"platform": "reddit", "name": "Mobile Legends",    "app_id": "MobileLegendsGame",   "thumbnail_url": None},
-    {"platform": "reddit", "name": "Honkai: Star Rail", "app_id": "HonkaiStarRail",      "thumbnail_url": None},
-    {"platform": "reddit", "name": "Wild Rift",         "app_id": "wildrift",            "thumbnail_url": None},
-    {"platform": "reddit", "name": "Free Fire",         "app_id": "freefire",            "thumbnail_url": None},
+    # --- 모바일 인기 Top 10 (Reddit + Google Play + App Store 통합 수집) ---
+    # app_id = play_store_id (Google Play 패키지명) — platform+app_id unique key로 활용
+    {
+        "platform": "mobile", "name": "Genshin Impact",
+        "app_id": "com.miHoYo.GenshinImpact", "thumbnail_url": None,
+        "reddit_id": "Genshin_Impact",
+        "play_store_id": "com.miHoYo.GenshinImpact",
+        "app_store_id": "1517783697",
+    },
+    {
+        "platform": "mobile", "name": "Clash of Clans",
+        "app_id": "com.supercell.clashofclans", "thumbnail_url": None,
+        "reddit_id": "ClashOfClans",
+        "play_store_id": "com.supercell.clashofclans",
+        "app_store_id": "529479190",
+    },
+    {
+        "platform": "mobile", "name": "Pokémon GO",
+        "app_id": "com.nianticlabs.pokemongo", "thumbnail_url": None,
+        "reddit_id": "pokemongo",
+        "play_store_id": "com.nianticlabs.pokemongo",
+        "app_store_id": "1094591345",
+    },
+    {
+        "platform": "mobile", "name": "Brawl Stars",
+        "app_id": "com.supercell.brawlstars", "thumbnail_url": None,
+        "reddit_id": "Brawlstars",
+        "play_store_id": "com.supercell.brawlstars",
+        "app_store_id": "1229016807",
+    },
+    {
+        "platform": "mobile", "name": "Clash Royale",
+        "app_id": "com.supercell.clashroyale", "thumbnail_url": None,
+        "reddit_id": "ClashRoyale",
+        "play_store_id": "com.supercell.clashroyale",
+        "app_store_id": "1053012308",
+    },
+    {
+        "platform": "mobile", "name": "PUBG Mobile",
+        "app_id": "com.tencent.ig", "thumbnail_url": None,
+        "reddit_id": "PUBGMobile",
+        "play_store_id": "com.tencent.ig",
+        "app_store_id": "1330123889",
+    },
+    {
+        "platform": "mobile", "name": "Mobile Legends",
+        "app_id": "com.mobile.legends", "thumbnail_url": None,
+        "reddit_id": "MobileLegendsGame",
+        "play_store_id": "com.mobile.legends",
+        "app_store_id": "1160056295",
+    },
+    {
+        "platform": "mobile", "name": "Honkai: Star Rail",
+        "app_id": "com.HoYoverse.hkrpgoversea", "thumbnail_url": None,
+        "reddit_id": "HonkaiStarRail",
+        "play_store_id": "com.HoYoverse.hkrpgoversea",
+        "app_store_id": "6448589051",
+    },
+    {
+        "platform": "mobile", "name": "Wild Rift",
+        "app_id": "com.riotgames.league.wildrift", "thumbnail_url": None,
+        "reddit_id": "wildrift",
+        "play_store_id": "com.riotgames.league.wildrift",
+        "app_store_id": "1550969885",
+    },
+    {
+        "platform": "mobile", "name": "Free Fire",
+        "app_id": "com.dts.freefireth", "thumbnail_url": None,
+        "reddit_id": "freefire",
+        "play_store_id": "com.dts.freefireth",
+        "app_store_id": "1300146617",
+    },
 ]
 
 

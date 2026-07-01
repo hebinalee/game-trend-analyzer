@@ -4,6 +4,25 @@
 
 ---
 
+## Table of Contents
+
+- [2026-04-04 — Project Initialization](#2026-04-04--project-initialization)
+- [2026-04-11 — Crawler Replacement: Naver Game Lounge → Steam Community API](#2026-04-11--crawler-replacement-naver-game-lounge--steam-community-api)
+- [2026-04-12 — Standalone Report Generator and First Steam Trend Report](#2026-04-12--standalone-report-generator-and-first-steam-trend-report)
+- [2026-04-13 — Documentation Improvements](#2026-04-13--documentation-improvements)
+- [2026-04-15 — Proactive AI Agent Team Design and Implementation (PR #1)](#2026-04-15--proactive-ai-agent-team-design-and-implementation-pr-1)
+- [2026-04-19 — Slack Webhook Integration and API Reliability Fixes (PR #2)](#2026-04-19--slack-webhook-integration-and-api-reliability-fixes-pr-2)
+- [2026-04-23 — Custom Game Mode (PR #3)](#2026-04-23--custom-game-mode-pr-3)
+- [2026-04-23 — Agent E Design: Introducing the Operator Q&A Service](#2026-04-23--agent-e-design-introducing-the-operator-qa-service)
+- [2026-04-24 — Agent E: Live Ops Advisor (PR #4)](#2026-04-24--agent-e-live-ops-advisor-pr-4)
+- [2026-05-07 — Game Ops Portal Frontend](#2026-05-07--game-ops-portal-frontend-current-branch-featureportal)
+- [2026-06-23 — Multi-Platform Data Source Expansion](#2026-06-23--multi-platform-data-source-expansion-featuremulti-platform-sources)
+- [2026-06-28 — Reddit Data Collection Testing & Portal Integration](#2026-06-28--reddit-data-collection-testing--portal-integration-featuremulti-platform)
+- [2026-07-02 — Mobile Top 10 Finalized + Google Play & App Store Crawlers Added](#2026-07-02--mobile-top-10-finalized--google-play--app-store-crawlers-added-featuremulti-platform)
+- [Current Status and Open Items](#current-status-and-open-items)
+
+---
+
 ## 2026-04-04 — Project Initialization
 
 **Goal:** Build the foundational service to automatically collect and analyze game community trends and deliver reports.
@@ -383,6 +402,77 @@ GET /api/posts/{game_id}?source=reddit&days_back=1&limit=50
 
 ---
 
+## 2026-07-02 — Mobile Top 10 Finalized + Google Play & App Store Crawlers Added (feature/multi-platform)
+
+**Background:** Reddit alone only captured community discussions. To collect actual player reviews — equivalent to Steam reviews — Google Play Store and Apple App Store were added as additional data sources. All three sources are unified under a single game entity, producing one combined report per game.
+
+**Mobile Top 10 Finalized:**
+
+Previous 5 games (arbitrarily chosen, included non-mobile Lost Ark) → replaced with top 10 by global MAU + Reddit community activity:
+
+| Game | Google Play Package | App Store ID | Subreddit |
+|------|---------------------|-------------|----------|
+| Genshin Impact | com.miHoYo.GenshinImpact | 1517783697 | r/Genshin_Impact |
+| Clash of Clans | com.supercell.clashofclans | 529479190 | r/ClashOfClans |
+| Pokémon GO | com.nianticlabs.pokemongo | 1094591345 | r/pokemongo |
+| Brawl Stars | com.supercell.brawlstars | 1229016807 | r/Brawlstars |
+| Clash Royale | com.supercell.clashroyale | 1053012308 | r/ClashRoyale |
+| PUBG Mobile | com.tencent.ig | 1330123889 | r/PUBGMobile |
+| Mobile Legends | com.mobile.legends | 1160056295 | r/MobileLegendsGame |
+| Honkai: Star Rail | com.HoYoverse.hkrpgoversea | 6448589051 | r/HonkaiStarRail |
+| Wild Rift | com.riotgames.league.wildrift | 1550969885 | r/wildrift |
+| Free Fire | com.dts.freefireth | 1300146617 | r/freefire |
+
+**Design Change — Game Entity Structure:**
+
+| Aspect | Before | After |
+|--------|--------|-------|
+| Mobile game platform value | `"reddit"` | `"mobile"` |
+| Source identifiers | Single `app_id` | Separate `reddit_id` · `play_store_id` · `app_store_id` |
+| Data sources per game | 1 (Reddit only) | 3 (Reddit + Google Play + App Store) |
+| Report | Potentially per-source | Single report per game_id |
+
+**Changed Files:**
+
+| File | Change |
+|------|--------|
+| `backend/models/game.py` | Added `reddit_id`, `play_store_id`, `app_store_id` fields |
+| `backend/models/post.py` | Added `rating: Float` field; `like_count` / `comment_count` made nullable |
+| `backend/database.py` | Mobile SEED_GAMES updated: platform="mobile", all 3 store IDs included |
+| `backend/crawler/base_crawler.py` | Added `_games_query()` override point |
+| `backend/crawler/reddit_community.py` | Changed to platform="mobile" + uses `game.reddit_id` |
+| `backend/crawler/google_play.py` *(new)* | `google-play-scraper` based; collects rating + thumbsUpCount |
+| `backend/crawler/app_store.py` *(new)* | iTunes RSS based; collects rating (like_count=null) |
+| `backend/scheduler/jobs.py` | Added `GooglePlayCrawler`, `AppStoreCrawler` |
+| `backend/main.py` | Registered new crawlers in trigger-crawl |
+| `backend/requirements.txt` | Added `google-play-scraper==1.2.7` |
+| `backend/analyzer/llm_analyzer.py` | Added ★ rating display in post output; unified platform label to "mobile" |
+
+**Data Collected per Source:**
+
+| Source | rating | like_count | comment_count |
+|--------|--------|------------|---------------|
+| Steam | null | helpful votes | null |
+| Reddit | null | upvote score | comment count |
+| Google Play | 1.0~5.0 ✅ | thumbsUpCount ✅ | null |
+| App Store | 1.0~5.0 ✅ | null | null |
+
+**Post-Deployment Bug Fixes:**
+
+Issues discovered during the first live crawl and analysis run.
+
+| File | Issue | Fix |
+|------|-------|-----|
+| `backend/schemas/post.py` | `like_count`/`comment_count` declared as non-null `int` → 500 error on API response | Changed to `int \| None`; added `rating` and `source` fields |
+| `backend/api/posts.py` | Same nullable issue + ORDER BY crash on NULL columns | Fixed types, switched to `COALESCE`-based sort |
+| `backend/analyzer/llm_analyzer.py` | Accessing `game.name` after `rollback()` triggers SQLAlchemy greenlet error | Pre-capture `game_name = game.name` before the try block |
+| `backend/analyzer/llm_analyzer.py` | `like_count + comment_count` sort raises TypeError when either is NULL | Changed to `(p.like_count or 0) + (p.comment_count or 0)` |
+| `backend/analyzer/llm_analyzer.py` | Claude model ID `claude-sonnet-4-20250514` → 404 Not Found | Updated to `claude-sonnet-4-6` |
+| `backend/analyzer/action_recommender.py` | Same outdated model ID | Updated to `claude-sonnet-4-6` |
+| `.claude/settings.local.json` | 13 individual curl endpoint allow-rules | Consolidated into 3 wildcard rules (`curl -s "http://localhost:8000/api/*`) |
+
+---
+
 ## Current Status and Open Items
 
 | Item | Status |
@@ -394,3 +484,5 @@ GET /api/posts/{game_id}?source=reddit&days_back=1&limit=50
 | Game Ops Portal frontend | Complete (feature/portal merged) |
 | Multi-platform source expansion | Complete (feature/multi-platform) |
 | Reddit portal integration (posts tab + platform badge) | Complete |
+| Mobile Top 10 + Google Play / App Store crawlers | Complete |
+| Reddit API key setup | Pending (policy page access issue) |
