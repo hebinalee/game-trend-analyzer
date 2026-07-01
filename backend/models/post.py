@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, Text, Integer, DateTime, ForeignKey
+from sqlalchemy import String, Text, Integer, Float, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 from database import Base
 
@@ -14,8 +14,9 @@ class Post(Base):
     title: Mapped[str | None] = mapped_column(String(500))
     content: Mapped[str | None] = mapped_column(Text)
     author: Mapped[str | None] = mapped_column(String(100))
-    like_count: Mapped[int] = mapped_column(Integer, default=0)
-    comment_count: Mapped[int] = mapped_column(Integer, default=0)
+    rating: Mapped[float | None] = mapped_column(Float)          # 1.0~5.0 (GooglePlay/AppStore), null (Steam/Reddit)
+    like_count: Mapped[int | None] = mapped_column(Integer)      # Steam=helpful, Reddit=score, GooglePlay=thumbsUp, AppStore=null
+    comment_count: Mapped[int | None] = mapped_column(Integer)   # Reddit=댓글수, 나머지=null
     post_type: Mapped[str | None] = mapped_column(String(50))
     crawled_at: Mapped[datetime | None] = mapped_column(DateTime)
     posted_at: Mapped[datetime | None] = mapped_column(DateTime)

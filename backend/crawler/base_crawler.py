@@ -16,6 +16,11 @@ class BaseCrawler(ABC):
     # 서브클래스에서 반드시 선언 (예: "steam", "naver")
     platform: str
 
+    def _games_query(self):
+        """크롤링 대상 게임 조회 쿼리. 서브클래스에서 필요 시 오버라이드."""
+        from sqlalchemy import select
+        return select(Game).where(Game.platform == self.platform, Game.is_active == True)
+
     @abstractmethod
     async def crawl_game(self, game: Game, days_back: int = 1) -> list[dict]:
         """
@@ -48,9 +53,7 @@ class BaseCrawler(ABC):
 
         logger = logging.getLogger(self.__class__.__name__)
 
-        result = await db_session.execute(
-            select(Game).where(Game.platform == self.platform, Game.is_active == True)
-        )
+        result = await db_session.execute(self._games_query())
         games = result.scalars().all()
 
         for game in games:

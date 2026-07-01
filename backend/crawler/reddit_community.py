@@ -102,7 +102,14 @@ async def _fetch_posts(subreddit: str, token: str, days_back: int = 1) -> list[d
 class RedditCommunityCrawler(BaseCrawler):
     """Reddit 커뮤니티 크롤러."""
 
-    platform = "reddit"
+    platform = "mobile"
+
+    def _games_query(self):
+        from sqlalchemy import select
+        return (
+            select(Game)
+            .where(Game.platform == "mobile", Game.is_active == True, Game.reddit_id.isnot(None))
+        )
 
     async def crawl_game(self, game: Game, days_back: int = 1) -> list[dict]:
         if not settings.reddit_client_id or not settings.reddit_client_secret:
@@ -116,7 +123,7 @@ class RedditCommunityCrawler(BaseCrawler):
         if not token:
             return []
 
-        subreddit = game.app_id
+        subreddit = game.reddit_id
         logger.info(f"[{game.name}] Reddit 수집 시작 (r/{subreddit})")
         posts = await _fetch_posts(subreddit, token, days_back)
         await random_delay(1, 2)

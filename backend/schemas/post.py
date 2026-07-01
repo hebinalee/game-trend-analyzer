@@ -8,8 +8,10 @@ class PostBase(BaseModel):
     title: str | None = None
     content: str | None = None
     author: str | None = None
-    like_count: int = 0
-    comment_count: int = 0
+    like_count: int | None = None
+    comment_count: int | None = None
+    rating: float | None = None
+    source: str | None = None
     post_type: str | None = None
     posted_at: datetime | None = None
 

@@ -18,6 +18,7 @@
 - [2026-05-07 — Game Ops Portal 프론트엔드](#2026-05-07--game-ops-portal-프론트엔드)
 - [2026-06-23 — 멀티 플랫폼 데이터 소스 확장](#2026-06-23--멀티-플랫폼-데이터-소스-확장-featuremulti-platform-sources)
 - [2026-06-28 — Reddit 데이터 수집 테스트 및 포털 통합](#2026-06-28--reddit-데이터-수집-테스트-및-포털-통합-featuremulti-platform)
+- [2026-07-02 — 모바일 게임 Top 10 확정 및 Google Play · App Store 크롤러 추가](#2026-07-02--모바일-게임-top-10-확정-및-google-play--app-store-크롤러-추가-featuremulti-platform)
 - [현재 상태 및 미결 사항](#현재-상태-및-미결-사항)
 
 ---
@@ -401,6 +402,77 @@ GET /api/posts/{game_id}?source=reddit&days_back=1&limit=50
 
 ---
 
+## 2026-07-02 — 모바일 게임 Top 10 확정 및 Google Play · App Store 크롤러 추가 (feature/multi-platform)
+
+**배경:** Reddit 크롤러만으로는 커뮤니티 토론만 수집할 수 있었다. 실제 설치자 기반의 평점·리뷰가 필요해 Steam과 동일한 성격의 모바일 플랫폼 리뷰 소스(Google Play, App Store)를 추가했다. 세 소스를 하나의 게임 엔티티로 묶어 통합 분석 및 단일 리포트를 제공한다.
+
+**모바일 게임 Top 10 확정:**
+
+기존 5개(임의 선정, Lost Ark 포함) → Reddit 커뮤니티 활성도 + 글로벌 MAU 기준 재선정:
+
+| 게임 | Google Play 패키지명 | App Store ID | subreddit |
+|------|---------------------|-------------|----------|
+| Genshin Impact | com.miHoYo.GenshinImpact | 1517783697 | r/Genshin_Impact |
+| Clash of Clans | com.supercell.clashofclans | 529479190 | r/ClashOfClans |
+| Pokémon GO | com.nianticlabs.pokemongo | 1094591345 | r/pokemongo |
+| Brawl Stars | com.supercell.brawlstars | 1229016807 | r/Brawlstars |
+| Clash Royale | com.supercell.clashroyale | 1053012308 | r/ClashRoyale |
+| PUBG Mobile | com.tencent.ig | 1330123889 | r/PUBGMobile |
+| Mobile Legends | com.mobile.legends | 1160056295 | r/MobileLegendsGame |
+| Honkai: Star Rail | com.HoYoverse.hkrpgoversea | 6448589051 | r/HonkaiStarRail |
+| Wild Rift | com.riotgames.league.wildrift | 1550969885 | r/wildrift |
+| Free Fire | com.dts.freefireth | 1300146617 | r/freefire |
+
+**설계 변경 — 게임 엔티티 구조:**
+
+| 항목 | 기존 | 변경 후 |
+|------|------|---------|
+| 모바일 게임 platform 값 | `"reddit"` | `"mobile"` |
+| 소스 식별자 | `app_id` 하나로 통합 | `reddit_id` · `play_store_id` · `app_store_id` 분리 |
+| 수집 소스 수 | 1개 (Reddit) | 3개 (Reddit + Google Play + App Store) |
+| 리포트 | 소스별 분리 가능성 | 하나의 game_id로 통합 → 단일 리포트 |
+
+**신규/변경된 파일:**
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `backend/models/game.py` | `reddit_id`, `play_store_id`, `app_store_id` 필드 추가 |
+| `backend/models/post.py` | `rating: Float` 필드 추가, `like_count` / `comment_count` nullable로 변경 |
+| `backend/database.py` | SEED_GAMES 모바일 10개 → platform="mobile", 3개 스토어 ID 포함 |
+| `backend/crawler/base_crawler.py` | `_games_query()` 오버라이드 포인트 추가 |
+| `backend/crawler/reddit_community.py` | `platform="mobile"` + `game.reddit_id` 사용으로 변경 |
+| `backend/crawler/google_play.py` *(신규)* | `google-play-scraper` 기반, rating + thumbsUpCount 수집 |
+| `backend/crawler/app_store.py` *(신규)* | iTunes RSS 기반, rating 수집 (like_count=null) |
+| `backend/scheduler/jobs.py` | `GooglePlayCrawler`, `AppStoreCrawler` 추가 |
+| `backend/main.py` | trigger-crawl에 새 크롤러 등록 |
+| `backend/requirements.txt` | `google-play-scraper==1.2.7` 추가 |
+| `backend/analyzer/llm_analyzer.py` | 포스트 출력에 ★ 평점 표시, 플랫폼 레이블 "mobile"로 통합 |
+
+**소스별 수집 데이터:**
+
+| 소스 | rating | like_count | comment_count |
+|------|--------|------------|---------------|
+| Steam | null | helpful 수 | null |
+| Reddit | null | upvote score | 댓글 수 |
+| Google Play | 1.0~5.0 ✅ | thumbsUpCount ✅ | null |
+| App Store | 1.0~5.0 ✅ | null | null |
+
+**배포 후 버그 픽스:**
+
+실제 수집·분석 실행 중 발견된 문제들을 수정했다.
+
+| 파일 | 문제 | 수정 내용 |
+|------|------|---------|
+| `backend/schemas/post.py` | `like_count`/`comment_count`가 `int`(non-null)로 선언 → 500 에러 | `int \| None`으로 변경, `rating`·`source` 필드 추가 |
+| `backend/api/posts.py` | 동일한 nullable 문제 + NULL 포함 컬럼 정렬 오류 | `int \| None` 수정, `COALESCE` 기반 정렬로 변경 |
+| `backend/analyzer/llm_analyzer.py` | `rollback()` 후 `game.name` 접근 시 SQLAlchemy greenlet 에러 | 루프 시작 시 `game_name = game.name` 선캡처 |
+| `backend/analyzer/llm_analyzer.py` | `like_count + comment_count` 정렬 시 NULL 덧셈 TypeError | `(p.like_count or 0) + (p.comment_count or 0)` 처리 |
+| `backend/analyzer/llm_analyzer.py` | Claude 모델 ID `claude-sonnet-4-20250514` → 404 오류 | `claude-sonnet-4-6`으로 수정 |
+| `backend/analyzer/action_recommender.py` | 동일한 모델 ID 문제 | `claude-sonnet-4-6`으로 수정 |
+| `.claude/settings.local.json` | curl 허용 명령이 엔드포인트별 개별 항목 13개 | `curl -s "http://localhost:8000/api/*` 등 와일드카드 3줄로 통합 |
+
+---
+
 ## 현재 상태 및 미결 사항
 
 | 항목 | 상태 |
@@ -412,3 +484,5 @@ GET /api/posts/{game_id}?source=reddit&days_back=1&limit=50
 | Game Ops Portal 프론트엔드 | 완료 (feature/portal 머지) |
 | 멀티 플랫폼 소스 확장 | 완료 (feature/multi-platform) |
 | Reddit 포털 통합 (게시글 탭 + 플랫폼 뱃지) | 완료 |
+| 모바일 Top 10 확정 + Google Play / App Store 크롤러 | 완료 |
+| Reddit API 키 발급 및 수집 | 미완료 (API 정책 페이지 진입 불가 이슈) |

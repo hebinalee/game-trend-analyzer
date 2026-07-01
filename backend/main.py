@@ -14,6 +14,8 @@ from api.live_ops_advisor import router as live_ops_advisor_router
 from api.posts import router as posts_router
 from crawler.steam_community import SteamCommunityCrawler
 from crawler.reddit_community import RedditCommunityCrawler
+from crawler.google_play import GooglePlayCrawler
+from crawler.app_store import AppStoreCrawler
 from analyzer.llm_analyzer import analyze_all_games
 from detector.anomaly_detector import detect_all_games
 from notifier.slack_notifier import send_alert
@@ -53,7 +55,7 @@ app.include_router(live_ops_advisor_router)
 app.include_router(posts_router)
 
 
-_crawlers = [SteamCommunityCrawler(), RedditCommunityCrawler()]
+_crawlers = [SteamCommunityCrawler(), RedditCommunityCrawler(), GooglePlayCrawler(), AppStoreCrawler()]
 
 
 @app.post("/api/admin/trigger-crawl", tags=["admin"])

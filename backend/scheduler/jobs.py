@@ -16,6 +16,8 @@ from config import settings
 from database import async_session
 from crawler.steam_community import SteamCommunityCrawler
 from crawler.reddit_community import RedditCommunityCrawler
+from crawler.google_play import GooglePlayCrawler
+from crawler.app_store import AppStoreCrawler
 from analyzer.llm_analyzer import analyze_all_games
 from detector.anomaly_detector import detect_all_games
 from notifier.slack_notifier import retry_failed_notifications
@@ -23,6 +25,8 @@ from notifier.slack_notifier import retry_failed_notifications
 _crawlers = [
     SteamCommunityCrawler(),
     RedditCommunityCrawler(),
+    GooglePlayCrawler(),
+    AppStoreCrawler(),
 ]
 
 logger = logging.getLogger(__name__)

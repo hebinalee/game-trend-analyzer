@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, func
 from database import get_db
 from models.post import Post
 
@@ -12,12 +12,13 @@ router = APIRouter(prefix="/api/posts", tags=["posts"])
 class PostResponse(BaseModel):
     id: int
     post_id: str
-    source: str
+    source: str | None = None
     title: str | None = None
     content: str | None = None
     author: str | None = None
-    like_count: int
-    comment_count: int
+    rating: float | None = None
+    like_count: int | None = None
+    comment_count: int | None = None
     post_type: str | None = None
     posted_at: datetime | None = None
     crawled_at: datetime | None = None
@@ -29,7 +30,7 @@ class PostResponse(BaseModel):
 @router.get("/{game_id}", response_model=list[PostResponse])
 async def get_posts(
     game_id: int,
-    source: str | None = Query(default=None, description="'steam' 또는 'reddit'으로 필터"),
+    source: str | None = Query(default=None, description="'steam', 'reddit', 'google_play', 'app_store' 필터"),
     days_back: int = Query(default=1, ge=1, le=30, description="최근 며칠치 게시글 (기본 1일)"),
     limit: int = Query(default=50, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
@@ -43,7 +44,10 @@ async def get_posts(
     )
     if source:
         query = query.where(Post.source == source)
-    query = query.order_by(desc(Post.like_count + Post.comment_count)).limit(limit)
+    # NULL-safe 정렬: like_count + comment_count (NULL은 0으로 처리)
+    query = query.order_by(
+        desc(func.coalesce(Post.like_count, 0) + func.coalesce(Post.comment_count, 0))
+    ).limit(limit)
 
     result = await db.execute(query)
     return result.scalars().all()
