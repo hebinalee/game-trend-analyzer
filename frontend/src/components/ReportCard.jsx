@@ -5,11 +5,6 @@ const ALERT_DOT = {
   WARNING: 'bg-yellow-400',
 }
 
-const PLATFORM_BADGE = {
-  steam: { label: 'Steam', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
-  reddit: { label: 'Reddit', className: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
-}
-
 export default function ReportCard({ game, report, alertSeverity, onClick }) {
   const sentiment = report?.sentiment || {}
   const pos = Math.round((sentiment.positive || 0) * 100)
@@ -47,11 +42,6 @@ export default function ReportCard({ game, report, alertSeverity, onClick }) {
         </div>
         <div className="flex flex-col gap-0.5 min-w-0">
           <h3 className="font-semibold text-base leading-tight truncate">{game.name}</h3>
-          {game.platform && PLATFORM_BADGE[game.platform] && (
-            <span className={`self-start px-1.5 py-0.5 text-[10px] font-medium rounded ${PLATFORM_BADGE[game.platform].className}`}>
-              {PLATFORM_BADGE[game.platform].label}
-            </span>
-          )}
         </div>
       </div>
 

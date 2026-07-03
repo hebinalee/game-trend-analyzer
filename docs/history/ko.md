@@ -19,6 +19,7 @@
 - [2026-06-23 — 멀티 플랫폼 데이터 소스 확장](#2026-06-23--멀티-플랫폼-데이터-소스-확장-featuremulti-platform-sources)
 - [2026-06-28 — Reddit 데이터 수집 테스트 및 포털 통합](#2026-06-28--reddit-데이터-수집-테스트-및-포털-통합-featuremulti-platform)
 - [2026-07-02 — 모바일 게임 Top 10 확정 및 Google Play · App Store 크롤러 추가](#2026-07-02--모바일-게임-top-10-확정-및-google-play--app-store-크롤러-추가-featuremulti-platform)
+- [2026-07-03 — 포탈 플랫폼 필터 추가 (Steam / 모바일 분리)](#2026-07-03--포탈-플랫폼-필터-추가-steam--모바일-분리)
 - [현재 상태 및 미결 사항](#현재-상태-및-미결-사항)
 
 ---
@@ -470,6 +471,37 @@ GET /api/posts/{game_id}?source=reddit&days_back=1&limit=50
 | `backend/analyzer/llm_analyzer.py` | Claude 모델 ID `claude-sonnet-4-20250514` → 404 오류 | `claude-sonnet-4-6`으로 수정 |
 | `backend/analyzer/action_recommender.py` | 동일한 모델 ID 문제 | `claude-sonnet-4-6`으로 수정 |
 | `.claude/settings.local.json` | curl 허용 명령이 엔드포인트별 개별 항목 13개 | `curl -s "http://localhost:8000/api/*` 등 와일드카드 3줄로 통합 |
+
+---
+
+## 2026-07-03 — 포탈 플랫폼 필터 추가 (Steam / 모바일 분리)
+
+**배경:** 모바일 게임 10종이 추가되면서 대시보드에 Steam PC 게임과 모바일 게임이 혼재하게 됐다. 서로 다른 플랫폼을 같은 화면에서 비교하거나 분석하는 것은 의미가 없으므로, 포탈 전체에서 플랫폼별 분리 필터를 제공하기로 했다.
+
+**변경 내용:**
+
+| 페이지 | 변경 내용 |
+|--------|----------|
+| `Dashboard` | 상단에 전체 / PC(Steam) / 모바일 필터 버튼 추가; 각 버튼에 해당 게임 수 표시 |
+| `Alerts` | 플랫폼 필터를 상위 개념으로 별도 행에 배치; 심각도 탭·게임 드롭다운은 하위 행에 들여쓰기 + 좌측 세로선으로 계층 표현 |
+| `Compare` | 플랫폼 필터 추가; 플랫폼 변경 시 선택된 게임 및 비교 결과 초기화 |
+| `ReportCard` | 플랫폼 뱃지 제거 (상단 필터로 대체되어 불필요) |
+
+**이슈 탭 필터 계층 구조 설계:**
+
+단순히 행을 분리하는 것만으로는 상하위 관계가 직관적으로 느껴지지 않아, 레이블 + 들여쓰기 + 좌측 세로선(`border-l-2`) 방식으로 시각적 계층을 표현했다.
+
+```
+플랫폼                          ← 상위 레이블
+  [ 전체 ]  [ PC (Steam) ]  [ 모바일 ]
+
+│  필터                         ← 하위 레이블 (들여쓰기 + 좌측 세로선)
+│  [ 전체 / 🚨CRITICAL / ⚠️WARNING / 미확인 ]   [ 게임 선택 ▾ ]
+```
+
+**추가 개선:**
+- `getGames()` 실패 시 에러 상태(`gamesError`)를 노출해 조용한 실패 방지
+- 게임 드롭다운 `value`를 `String(g.id)`로 통일 (`gameFilter` 문자열 타입과 일치)
 
 ---
 

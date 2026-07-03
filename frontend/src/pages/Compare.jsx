@@ -3,17 +3,37 @@ import { getGames, compareGames } from '../api.js'
 import GameSelector from '../components/GameSelector.jsx'
 import CompareView from '../components/CompareView.jsx'
 
+const PLATFORM_FILTERS = [
+  { key: 'all',    label: '전체' },
+  { key: 'steam',  label: 'PC (Steam)' },
+  { key: 'mobile', label: '모바일' },
+]
+
 export default function Compare() {
   const [games, setGames] = useState([])
+  const [gamesError, setGamesError] = useState(false)
   const [selected, setSelected] = useState([])
+  const [platformFilter, setPlatformFilter] = useState('all')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    getGames().then(setGames).catch(() => {})
+    getGames()
+      .then(setGames)
+      .catch(() => setGamesError(true))
   }, [])
+
+  const filteredGames = platformFilter === 'all'
+    ? games
+    : games.filter(g => g.platform === platformFilter)
+
+  const handlePlatformChange = (key) => {
+    setPlatformFilter(key)
+    setSelected([])
+    setResults([])
+  }
 
   const handleCompare = () => {
     if (selected.length < 2) {
@@ -52,7 +72,31 @@ export default function Compare() {
             </button>
           </div>
         </div>
-        <GameSelector games={games} selected={selected} onChange={setSelected} max={4} />
+
+        {/* 플랫폼 필터 */}
+        <div className="flex gap-2 mb-4">
+          {PLATFORM_FILTERS.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => handlePlatformChange(key)}
+              className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                platformFilter === key
+                  ? 'bg-indigo-600 text-white border-indigo-600'
+                  : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {gamesError ? (
+          <p className="text-sm text-red-500">게임 목록을 불러오지 못했습니다. 백엔드 연결을 확인해주세요.</p>
+        ) : filteredGames.length === 0 && games.length > 0 ? (
+          <p className="text-sm text-gray-400">선택한 플랫폼에 해당하는 게임이 없습니다.</p>
+        ) : (
+          <GameSelector games={filteredGames} selected={selected} onChange={setSelected} max={4} />
+        )}
       </div>
 
       {/* 결과 */}
