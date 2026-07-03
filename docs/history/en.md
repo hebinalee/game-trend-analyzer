@@ -19,6 +19,7 @@
 - [2026-06-23 — Multi-Platform Data Source Expansion](#2026-06-23--multi-platform-data-source-expansion-featuremulti-platform-sources)
 - [2026-06-28 — Reddit Data Collection Testing & Portal Integration](#2026-06-28--reddit-data-collection-testing--portal-integration-featuremulti-platform)
 - [2026-07-02 — Mobile Top 10 Finalized + Google Play & App Store Crawlers Added](#2026-07-02--mobile-top-10-finalized--google-play--app-store-crawlers-added-featuremulti-platform)
+- [2026-07-03 — Portal Platform Filter (Steam / Mobile Separation)](#2026-07-03--portal-platform-filter-steam--mobile-separation)
 - [Current Status and Open Items](#current-status-and-open-items)
 
 ---
@@ -470,6 +471,37 @@ Issues discovered during the first live crawl and analysis run.
 | `backend/analyzer/llm_analyzer.py` | Claude model ID `claude-sonnet-4-20250514` → 404 Not Found | Updated to `claude-sonnet-4-6` |
 | `backend/analyzer/action_recommender.py` | Same outdated model ID | Updated to `claude-sonnet-4-6` |
 | `.claude/settings.local.json` | 13 individual curl endpoint allow-rules | Consolidated into 3 wildcard rules (`curl -s "http://localhost:8000/api/*`) |
+
+---
+
+## 2026-07-03 — Portal Platform Filter (Steam / Mobile Separation)
+
+**Background:** With 10 mobile games added alongside the existing 10 Steam titles, the portal began mixing PC and mobile games on every screen. Cross-platform comparison and analysis is not meaningful, so a platform filter was added across the entire portal to let operators focus on one platform at a time.
+
+**Changes:**
+
+| Page | Change |
+|------|--------|
+| `Dashboard` | Added 전체 / PC(Steam) / 모바일 filter buttons; each button shows the game count for that platform |
+| `Alerts` | Platform filter placed as a top-level row; severity tabs and game dropdown sit below with indentation + left border to express the hierarchy visually |
+| `Compare` | Platform filter added; switching platform resets selected games and comparison results |
+| `ReportCard` | Removed platform badge (replaced by the dashboard filter above) |
+
+**Alerts Filter Hierarchy Design:**
+
+Simply separating rows was not intuitive enough to convey parent-child relationships. The final design uses a label + indentation + `border-l-2` left border to make the hierarchy explicit:
+
+```
+Platform                          ← parent label
+  [ All ]  [ PC (Steam) ]  [ Mobile ]
+
+│  Filter                         ← child label (indented + left border)
+│  [ All / 🚨CRITICAL / ⚠️WARNING / Unread ]   [ Select game ▾ ]
+```
+
+**Additional Improvements:**
+- Exposed `gamesError` state when `getGames()` fails, preventing silent failures
+- Unified game dropdown `value` to `String(g.id)` to match the string-typed `gameFilter` state
 
 ---
 

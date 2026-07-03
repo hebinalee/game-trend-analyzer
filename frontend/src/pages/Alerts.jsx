@@ -10,6 +10,12 @@ const SEVERITY_TABS = [
   { key: '__new__',  label: '미확인' },
 ]
 
+const PLATFORM_FILTERS = [
+  { key: 'all',    label: '전체' },
+  { key: 'steam',  label: 'PC (Steam)' },
+  { key: 'mobile', label: '모바일' },
+]
+
 function Skeleton() {
   return (
     <div className="animate-pulse rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 h-24">
@@ -24,7 +30,9 @@ export default function Alerts() {
   const [alerts, setAlerts] = useState([])
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
+  const [gamesError, setGamesError] = useState(false)
   const [activeTab, setActiveTab] = useState('')
+  const [platformFilter, setPlatformFilter] = useState('all')
   const [gameFilter, setGameFilter] = useState('')
   const [selectedAlert, setSelectedAlert] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
@@ -42,7 +50,9 @@ export default function Alerts() {
   }
 
   useEffect(() => {
-    getGames().then(setGames).catch(() => {})
+    getGames()
+      .then(setGames)
+      .catch(() => setGamesError(true))
     fetchAlerts('', '')
   }, [])
 
@@ -51,10 +61,20 @@ export default function Alerts() {
     fetchAlerts(tab, gameFilter)
   }
 
+  const handlePlatformFilter = (platform) => {
+    setPlatformFilter(platform)
+    setGameFilter('')
+    fetchAlerts(activeTab, '')
+  }
+
   const handleGameFilter = (gameId) => {
     setGameFilter(gameId)
     fetchAlerts(activeTab, gameId)
   }
+
+  const filteredGames = platformFilter === 'all'
+    ? games
+    : games.filter(g => g.platform === platformFilter)
 
   const handleCardClick = async (alertId) => {
     setDetailLoading(true)
@@ -90,35 +110,62 @@ export default function Alerts() {
       </div>
 
       {/* 필터 영역 */}
-      <div className="flex flex-wrap items-center gap-3 mb-5">
-        {/* 심각도 탭 */}
-        <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-          {SEVERITY_TABS.map(tab => (
+      {/* 플랫폼 (상위) */}
+      <div className="mb-4">
+        <span className="block text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">플랫폼</span>
+        <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 w-fit">
+          {PLATFORM_FILTERS.map(({ key, label }) => (
             <button
-              key={tab.key}
-              onClick={() => handleTabChange(tab.key)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                activeTab === tab.key
+              key={key}
+              onClick={() => handlePlatformFilter(key)}
+              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                platformFilter === key
                   ? 'bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-gray-100'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
-              {tab.label}
+              {label}
             </button>
           ))}
         </div>
+      </div>
 
-        {/* 게임 필터 */}
-        <select
-          value={gameFilter}
-          onChange={e => handleGameFilter(e.target.value)}
-          className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200"
-        >
-          <option value="">전체 게임</option>
-          {games.map(g => (
-            <option key={g.id} value={g.id}>{g.name}</option>
-          ))}
-        </select>
+      {/* 세부 필터 (하위) — 좌측 세로선으로 계층 표현 */}
+      <div className="pl-4 border-l-2 border-gray-200 dark:border-gray-700 mb-5">
+        <span className="block text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">필터</span>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* 심각도 탭 */}
+          <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            {SEVERITY_TABS.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => handleTabChange(tab.key)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  activeTab === tab.key
+                    ? 'bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-gray-100'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* 게임 필터 */}
+          <select
+            value={gameFilter}
+            onChange={e => handleGameFilter(e.target.value)}
+            className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+          >
+            <option value="">전체 게임</option>
+            {gamesError
+              ? <option disabled>게임 목록 로드 실패</option>
+              : filteredGames.map(g => (
+                <option key={g.id} value={String(g.id)}>{g.name}</option>
+              ))
+            }
+          </select>
+        </div>
       </div>
 
       {/* 이슈 목록 */}

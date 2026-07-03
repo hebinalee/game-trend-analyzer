@@ -17,12 +17,19 @@ function Skeleton() {
   )
 }
 
+const PLATFORM_FILTERS = [
+  { key: 'all',    label: '전체' },
+  { key: 'steam',  label: 'PC (Steam)' },
+  { key: 'mobile', label: '모바일' },
+]
+
 export default function Dashboard() {
   const [items, setItems] = useState([])
   const [alertsByGame, setAlertsByGame] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
+  const [platformFilter, setPlatformFilter] = useState('all')
   const navigate = useNavigate()
 
   const load = () => {
@@ -60,9 +67,13 @@ export default function Dashboard() {
     triggerAnalyze().then(() => alert('분석이 시작되었습니다.')).catch(() => alert('오류 발생'))
   }
 
+  const filteredItems = platformFilter === 'all'
+    ? items
+    : items.filter(item => item.platform === platformFilter)
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold">게임 유저 동향 대시보드</h1>
           {lastUpdate && (
@@ -85,6 +96,28 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* 플랫폼 필터 */}
+      <div className="flex gap-2 mb-6">
+        {PLATFORM_FILTERS.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setPlatformFilter(key)}
+            className={`px-4 py-1.5 text-sm rounded-full border transition-colors ${
+              platformFilter === key
+                ? 'bg-indigo-600 text-white border-indigo-600'
+                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'
+            }`}
+          >
+            {label}
+            {!loading && (
+              <span className={`ml-1.5 text-xs ${platformFilter === key ? 'text-indigo-200' : 'text-gray-400'}`}>
+                {key === 'all' ? items.length : items.filter(i => i.platform === key).length}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6 flex items-center justify-between">
           <span className="text-red-600 dark:text-red-400">{error}</span>
@@ -97,7 +130,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {loading
           ? Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} />)
-          : items.map(item => (
+          : filteredItems.map(item => (
             <ReportCard
               key={item.game_id}
               game={{ id: item.game_id, name: item.game_name, platform: item.platform, thumbnail_url: item.thumbnail_url }}
