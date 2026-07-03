@@ -16,6 +16,7 @@ Steam 커뮤니티 리포트 생성 도구(수동)를
 | M2 | 알림 연동 | Agent B (Slack) | **완료** |
 | M3 | 이슈 관리 UI | Agent D (API + Frontend) | **완료** |
 | M4 | 통합 검증 | 통합 포인트 검증, 버그 수정 | **완료** |
+| M5 | 멀티 플랫폼 지원 | Reddit·Google Play·App Store 크롤러 추가, 포탈 플랫폼 필터 | **완료** |
 
 ---
 
@@ -41,29 +42,41 @@ M2와 M3는 M1 완료 후 **병렬 진행 가능**.
 - [x] 수동 트리거 API (`POST /api/admin/trigger-detect`)
 - [x] 팀 문서화 (`docs/`)
 
-### Sprint 2 (예정)
-- [ ] Agent B: Slack notifier 구현
-- [ ] Agent D: 이슈 관리 API 3종 구현
-- [ ] Agent D: 프론트엔드 이슈 트래킹 UI
+### Sprint 2 (완료)
+- [x] Agent B: Slack notifier 구현
+- [x] Agent D: 이슈 관리 API 3종 구현
+- [x] Agent D: 프론트엔드 이슈 트래킹 UI
 
-### Sprint 3 (예정)
-- [ ] E2E 시나리오 테스트 (가짜 이상 데이터 주입 → Slack 수신 확인)
-- [ ] 감지 임계값 튜닝 (운영 데이터 기반)
-- [ ] 문서 최종 정리 + README 업데이트
+### Sprint 3 (완료)
+- [x] Agent E: LiveOps Advisor (Tool Use 에이전트)
+- [x] E2E 통합 검증 및 배포 후 버그 수정
+- [x] README 업데이트 (EN/KO)
+
+### Sprint 4 (완료)
+- [x] Reddit 커뮤니티 크롤러 (PC + 모바일 공용)
+- [x] Google Play 리뷰 크롤러
+- [x] App Store 리뷰 크롤러
+- [x] Game 모델 멀티 플랫폼 확장 (platform, reddit_id, play_store_id, app_store_id)
+- [x] Post 모델 source·rating 필드 추가
+- [x] 모바일 게임 10종 seed 데이터 추가
+- [x] 포탈 전체(대시보드·이슈·비교) 플랫폼 필터(Steam/모바일) 추가
 
 ---
 
-## 현재 상태 (2026-04-15 기준)
+## 현재 상태 (2026-07-01 기준)
 
-완료된 작업:
-- `backend/models/alert.py` — alerts 테이블
-- `backend/detector/anomaly_detector.py` — 감지 엔진 (sentiment_drop / volume_spike / keyword_alert)
-- `backend/analyzer/action_recommender.py` — 부서별 대응 제안 (Claude API)
-- 스케줄러·admin API 연동
+완료된 작업 (전체):
+- M1–M5 모든 마일스톤 완료
+- 20개 게임 (Steam 10 + 모바일 10) 운영 중
+- 멀티 플랫폼 크롤러 4종 (Steam, Reddit, Google Play, App Store)
+- 이상 감지 → 대응 제안 → Slack 알림 파이프라인 가동
+- LiveOps Advisor (on-demand 자연어 질의)
+- 포탈 플랫폼 필터 (Steam/모바일 분리)
 
-다음 작업:
-- Agent B (Slack) → Agent D (API + UI) 순서로 진행
-- 또는 M2, M3 병렬 진행 가능
+다음 후보 작업:
+- 감지 임계값 튜닝 (운영 데이터 2주 이상 확보 후)
+- 오탐율 리뷰 (CRITICAL 알림 < 20% 기준)
+- 단위 테스트 추가 (Agent A 우선)
 
 ---
 
