@@ -2,6 +2,7 @@ import { useState } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
+import { Bug, Star, Settings } from 'lucide-react'
 import { SENTIMENT } from '../colors.js'
 
 const COLORS = ['#8b5cf6', '#06b6d4', '#f97316', '#ec4899']
@@ -34,15 +35,18 @@ function SentimentBar({ positive, neutral, negative }) {
   )
 }
 
-function IssueList({ emoji, label, color, items }) {
+function IssueList({ icon: Icon, label, color, items }) {
   if (!items || items.length === 0) return null
   return (
     <div>
-      <p className={`text-xs font-semibold mb-1 ${color}`}>{emoji} {label}</p>
+      <p className={`flex items-center gap-1 text-xs font-semibold mb-1.5 ${color}`}>
+        {Icon && <Icon size={11} strokeWidth={2.5} />}
+        {label}
+      </p>
       <ul className="space-y-0.5">
         {items.map((item, i) => (
-          <li key={i} className="text-xs text-gray-600 dark:text-gray-400 flex gap-1.5">
-            <span className="mt-0.5 shrink-0">·</span>
+          <li key={i} className="text-xs text-slate-600 dark:text-slate-400 flex gap-1.5">
+            <span className="mt-0.5 shrink-0 text-slate-400">·</span>
             <span>{item}</span>
           </li>
         ))}
@@ -58,11 +62,11 @@ function GameCard({ r, color, isExpanded, onToggle }) {
   const trendKeywords = r.report?.trend_keywords || []
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col">
       {/* 헤더 */}
       <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: color + '18', borderBottom: `3px solid ${color}` }}>
         <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
-        <h4 className="font-bold text-sm truncate" title={r.game_name}>{r.game_name}</h4>
+        <h4 className="font-bold text-sm truncate text-slate-800 dark:text-slate-100" title={r.game_name}>{r.game_name}</h4>
       </div>
 
       {r.report ? (
@@ -70,16 +74,16 @@ function GameCard({ r, color, isExpanded, onToggle }) {
 
           {/* 감성 분포 */}
           <div>
-            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">감성 분포</p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">감성 분포</p>
             <SentimentBar positive={s.positive} neutral={s.neutral} negative={s.negative} />
           </div>
 
-          <hr className="border-gray-100 dark:border-gray-700" />
+          <hr className="border-slate-100 dark:border-slate-700" />
 
           {/* 요약 */}
           <div>
-            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">요약</p>
-            <p className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${isExpanded ? '' : 'line-clamp-4'}`}>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">요약</p>
+            <p className={`text-sm text-slate-700 dark:text-slate-300 leading-relaxed ${isExpanded ? '' : 'line-clamp-4'}`}>
               {r.report.summary || '요약 없음'}
             </p>
             <button
@@ -93,7 +97,7 @@ function GameCard({ r, color, isExpanded, onToggle }) {
           {/* 화제 */}
           {hotTopics.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">화제</p>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">화제</p>
               <div className="flex flex-wrap gap-1">
                 {hotTopics.map((t, j) => (
                   <span key={j} className="px-2 py-0.5 text-xs rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800">
@@ -107,13 +111,13 @@ function GameCard({ r, color, isExpanded, onToggle }) {
           {/* 핵심 이슈 — 펼침 상태에서만 */}
           {isExpanded && (
             <div>
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">핵심 이슈</p>
-              <div className="space-y-2.5 bg-gray-50 dark:bg-gray-900/40 rounded-lg p-3">
-                <IssueList emoji="🐛" label="버그" color="text-red-500" items={issues.bugs} />
-                <IssueList emoji="💬" label="요청사항" color="text-blue-500" items={issues.requests} />
-                <IssueList emoji="⚙️" label="운영 이슈" color="text-amber-500" items={issues.operations} />
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">핵심 이슈</p>
+              <div className="space-y-2.5 bg-slate-50 dark:bg-slate-900/40 rounded-xl p-3">
+                <IssueList icon={Bug} label="버그" color="text-red-500" items={issues.bugs} />
+                <IssueList icon={Star} label="요청사항" color="text-blue-500" items={issues.requests} />
+                <IssueList icon={Settings} label="운영 이슈" color="text-amber-500" items={issues.operations} />
                 {!issues.bugs?.length && !issues.requests?.length && !issues.operations?.length && (
-                  <p className="text-xs text-gray-400">이슈 없음</p>
+                  <p className="text-xs text-slate-400">이슈 없음</p>
                 )}
               </div>
             </div>
@@ -122,10 +126,10 @@ function GameCard({ r, color, isExpanded, onToggle }) {
           {/* 트렌드 키워드 */}
           {trendKeywords.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">트렌드 키워드</p>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">트렌드 키워드</p>
               <div className="flex flex-wrap gap-1">
                 {trendKeywords.map((t, j) => (
-                  <span key={j} className="px-2 py-0.5 text-xs rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-mono">
+                  <span key={j} className="px-2 py-0.5 text-xs rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-mono">
                     #{t}
                   </span>
                 ))}
@@ -135,7 +139,7 @@ function GameCard({ r, color, isExpanded, onToggle }) {
 
         </div>
       ) : (
-        <div className="p-4 text-sm text-gray-400 flex-1 flex items-center justify-center">
+        <div className="p-4 text-sm text-slate-400 flex-1 flex items-center justify-center">
           해당 날짜 데이터 없음
         </div>
       )}
@@ -173,9 +177,9 @@ export default function CompareView({ results }) {
     <div className="space-y-6">
 
       {/* 감성 분포 비교 — 가로 누적 막대 */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
-        <h3 className="font-semibold mb-1">감성 분포 비교</h3>
-        <p className="text-xs text-gray-400 mb-4">긍정 / 중립 / 부정 비율 (%)을 게임별로 비교합니다.</p>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+        <h3 className="font-semibold mb-1 text-slate-800 dark:text-slate-100">감성 분포 비교</h3>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">긍정 / 중립 / 부정 비율 (%)을 게임별로 비교합니다.</p>
         <ResponsiveContainer width="100%" height={chartHeight}>
           <BarChart data={sentimentData} layout="vertical" margin={{ left: 8, right: 24, top: 4, bottom: 4 }} barSize={20}>
             <XAxis type="number" domain={[0, 100]} tickFormatter={v => `${v}%`} tick={{ fontSize: 11 }} />

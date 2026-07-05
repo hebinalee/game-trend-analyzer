@@ -3,10 +3,10 @@
 ## AS-IS (수동 비서)
 
 ```
-Steam API ──▶ Crawler ──▶ PostgreSQL ──▶ LLM Analyzer ──▶ Report
-                                                              │
-                                                         React Dashboard
-                                                         (사람이 직접 확인)
+Steam Review/News API ──▶ Crawler ──▶ PostgreSQL ──▶ LLM Analyzer ──▶ Report
+                                                                          │
+                                                                     React Dashboard
+                                                                     (사람이 직접 확인)
 ```
 
 - 스케줄: 크롤링 6h 주기, 분석 매일 07:00 KST
@@ -18,8 +18,10 @@ Steam API ──▶ Crawler ──▶ PostgreSQL ──▶ LLM Analyzer ──�
 ## TO-BE (능동 비서)
 
 ```
-Steam API ──▶ Crawler ──▶ PostgreSQL
-                               │
+Steam Review/News API ─┐
+Reddit (subreddit)    ─┼──▶ Crawler ──▶ PostgreSQL
+Google Play Store     ─┤
+App Store             ─┘       │
                     ┌──────────▼──────────┐
                     │   Agent A           │  이상 감지
                     │   anomaly_detector  │  sentiment_drop / volume_spike / keyword_alert
@@ -146,6 +148,12 @@ Steam API ──▶ Crawler ──▶ PostgreSQL
 
 ```
 backend/
+├── crawler/
+│   ├── base_crawler.py         # BaseCrawler 추상 클래스 (공통 인터페이스)
+│   ├── steam_community.py      # Steam Review + News API (PC)
+│   ├── reddit_community.py     # Reddit JSON API (PC + mobile)
+│   ├── google_play.py          # Google Play 리뷰 스크래퍼 (mobile)
+│   └── app_store.py            # App Store RSS 피드 (mobile)
 ├── detector/
 │   ├── __init__.py
 │   └── anomaly_detector.py     # Agent A: 감지 로직, detect_all_games()
@@ -157,23 +165,24 @@ backend/
 │   ├── __init__.py
 │   └── slack_notifier.py       # Agent B: Slack Incoming Webhook
 ├── models/
-│   ├── game.py
-│   ├── post.py
+│   ├── game.py                 # platform 필드; mobile 전용 id 컬럼(reddit_id 등)
+│   ├── post.py                 # source 필드(steam_review/reddit/google_play/app_store)
 │   ├── report.py
 │   └── alert.py                # alerts 테이블
 ├── schemas/
+│   ├── game.py
 │   ├── alert.py
-│   └── live_ops_advisor.py          # Agent E: OpsAdvisorRequest / OpsAdvisorResponse
+│   └── live_ops_advisor.py     # Agent E: OpsAdvisorRequest / OpsAdvisorResponse
 ├── api/
 │   ├── games.py
 │   ├── reports.py
 │   ├── dashboard.py
 │   ├── alerts.py               # Agent D: 이슈 관리 API
-│   └── live_ops_advisor.py          # Agent E: POST /api/live-ops-advisor
+│   └── live_ops_advisor.py     # Agent E: POST /api/live-ops-advisor
 └── scheduler/
     └── jobs.py                 # 크롤링 → 감지 체인 연결됨
 
 scripts/
-├── poc_pipeline.py             # POC: Steam Top10 + 커스텀 게임 트렌드 리포트
+├── poc_pipeline.py             # POC: 멀티 플랫폼 트렌드 리포트
 └── live_ops_advisor_pipeline.py     # Agent E POC: standalone LiveOps Advisor (DB 없이 실행)
 ```
