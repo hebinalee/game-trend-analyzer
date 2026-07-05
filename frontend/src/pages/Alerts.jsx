@@ -1,41 +1,81 @@
 import { useEffect, useState } from 'react'
+import {
+  AlertOctagon, Monitor, Smartphone, Layers, CheckCircle,
+} from 'lucide-react'
 import { getAlerts, getAlertDetail, getGames } from '../api.js'
 import AlertCard from '../components/AlertCard.jsx'
 import AlertDetail from '../components/AlertDetail.jsx'
 
+/* ------------------------------------------------------------------ */
+/* Constants                                                            */
+/* ------------------------------------------------------------------ */
+
 const SEVERITY_TABS = [
-  { key: '',         label: '전체' },
-  { key: 'CRITICAL', label: '🚨 CRITICAL' },
-  { key: 'WARNING',  label: '⚠️ WARNING' },
-  { key: '__new__',  label: '미확인' },
+  {
+    key: '',
+    label: '전체',
+    activeCls: 'bg-slate-700 text-white dark:bg-slate-200 dark:text-slate-800',
+  },
+  {
+    key: 'CRITICAL',
+    label: 'CRITICAL',
+    activeCls: 'bg-red-500 text-white',
+  },
+  {
+    key: 'WARNING',
+    label: 'WARNING',
+    activeCls: 'bg-amber-400 text-amber-900',
+  },
+  {
+    key: '__new__',
+    label: '미확인',
+    activeCls: 'bg-indigo-600 text-white dark:bg-indigo-500',
+  },
 ]
 
 const PLATFORM_FILTERS = [
-  { key: 'all',    label: '전체' },
-  { key: 'steam',  label: 'PC (Steam)' },
-  { key: 'mobile', label: '모바일' },
+  { key: 'all',    label: '전체',      Icon: Layers },
+  { key: 'steam',  label: 'PC',        Icon: Monitor },
+  { key: 'mobile', label: '모바일',    Icon: Smartphone },
 ]
+
+/* ------------------------------------------------------------------ */
+/* Skeleton                                                             */
+/* ------------------------------------------------------------------ */
 
 function Skeleton() {
   return (
-    <div className="animate-pulse rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 h-24">
-      <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-1/3 mb-2" />
-      <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-full mb-1" />
-      <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-2/3" />
+    <div className="animate-pulse rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 h-36">
+      <div className="flex justify-between mb-3">
+        <div className="h-5 bg-slate-200 dark:bg-slate-600 rounded-full w-20" />
+        <div className="h-5 bg-slate-200 dark:bg-slate-600 rounded-full w-14" />
+      </div>
+      <div className="h-3.5 bg-slate-200 dark:bg-slate-600 rounded w-full mb-2" />
+      <div className="h-3.5 bg-slate-200 dark:bg-slate-600 rounded w-3/4 mb-5" />
+      <div className="flex justify-between">
+        <div className="h-3 bg-slate-200 dark:bg-slate-600 rounded w-24" />
+        <div className="h-3 bg-slate-200 dark:bg-slate-600 rounded w-16" />
+      </div>
     </div>
   )
 }
 
+/* ------------------------------------------------------------------ */
+/* Page                                                                 */
+/* ------------------------------------------------------------------ */
+
 export default function Alerts() {
-  const [alerts, setAlerts] = useState([])
-  const [games, setGames] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [gamesError, setGamesError] = useState(false)
-  const [activeTab, setActiveTab] = useState('')
+  const [alerts, setAlerts]           = useState([])
+  const [games, setGames]             = useState([])
+  const [loading, setLoading]         = useState(true)
+  const [gamesError, setGamesError]   = useState(false)
+  const [activeTab, setActiveTab]     = useState('')
   const [platformFilter, setPlatformFilter] = useState('all')
-  const [gameFilter, setGameFilter] = useState('')
+  const [gameFilter, setGameFilter]   = useState('')
   const [selectedAlert, setSelectedAlert] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
+
+  /* fetch ----------------------------------------------------------- */
 
   const fetchAlerts = (tab, game) => {
     setLoading(true)
@@ -56,6 +96,8 @@ export default function Alerts() {
     fetchAlerts('', '')
   }, [])
 
+  /* handlers -------------------------------------------------------- */
+
   const handleTabChange = (tab) => {
     setActiveTab(tab)
     fetchAlerts(tab, gameFilter)
@@ -72,10 +114,6 @@ export default function Alerts() {
     fetchAlerts(activeTab, gameId)
   }
 
-  const filteredGames = platformFilter === 'all'
-    ? games
-    : games.filter(g => g.platform === platformFilter)
-
   const handleCardClick = async (alertId) => {
     setDetailLoading(true)
     try {
@@ -91,95 +129,120 @@ export default function Alerts() {
     setAlerts(prev => prev.map(a => a.id === updated.id ? { ...a, status: updated.status } : a))
   }
 
-  const criticalCount = alerts.filter(a => a.severity === 'CRITICAL' && a.status === 'new').length
+  /* derived --------------------------------------------------------- */
+
+  const criticalCount  = alerts.filter(a => a.severity === 'CRITICAL' && a.status === 'new').length
+  const filteredGames  = platformFilter === 'all'
+    ? games
+    : games.filter(g => g.platform === platformFilter)
+
+  /* ---------------------------------------------------------------- */
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 -m-4 sm:-m-6 p-4 sm:p-6">
+
+      {/* Page header */}
+      <div className="flex items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold">이슈 트래킹</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">이슈 트래킹</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             감지된 이상 이슈 및 대응 방안
           </p>
         </div>
+
         {criticalCount > 0 && (
-          <span className="px-3 py-1 bg-red-500 text-white text-sm font-bold rounded-full">
-            🚨 미확인 CRITICAL {criticalCount}건
-          </span>
+          <div className="flex items-center gap-1.5 bg-red-500 text-white px-3 py-1.5 rounded-full shadow-md shadow-red-200 dark:shadow-red-900/40 shrink-0">
+            <AlertOctagon size={14} strokeWidth={2.5} />
+            <span className="text-sm font-bold whitespace-nowrap">
+              미확인 CRITICAL {criticalCount}건
+            </span>
+          </div>
         )}
       </div>
 
-      {/* 필터 영역 */}
-      {/* 플랫폼 (상위) */}
-      <div className="mb-4">
-        <span className="block text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">플랫폼</span>
-        <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 w-fit">
-          {PLATFORM_FILTERS.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => handlePlatformFilter(key)}
-              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                platformFilter === key
-                  ? 'bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-gray-100'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 세부 필터 (하위) — 좌측 세로선으로 계층 표현 */}
-      <div className="pl-4 border-l-2 border-gray-200 dark:border-gray-700 mb-5">
-        <span className="block text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">필터</span>
+      {/* Filter bar */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-6">
         <div className="flex flex-wrap items-center gap-3">
-          {/* 심각도 탭 */}
-          <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-            {SEVERITY_TABS.map(tab => (
+
+          {/* Platform toggle */}
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 rounded-xl p-1">
+            {PLATFORM_FILTERS.map(({ key, label, Icon }) => (
               <button
-                key={tab.key}
-                onClick={() => handleTabChange(tab.key)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                  activeTab === tab.key
-                    ? 'bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-gray-100'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                key={key}
+                onClick={() => handlePlatformFilter(key)}
+                title={label}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
+                  platformFilter === key
+                    ? 'bg-white dark:bg-slate-600 shadow text-slate-900 dark:text-slate-100'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                 }`}
               >
-                {tab.label}
+                <Icon size={13} />
+                <span className="hidden sm:inline">{label}</span>
               </button>
             ))}
           </div>
 
-          {/* 게임 필터 */}
+          {/* Divider */}
+          <div className="w-px h-6 bg-slate-200 dark:bg-slate-600" />
+
+          {/* Severity pill-tabs */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {SEVERITY_TABS.map(({ key, label, activeCls }) => (
+              <button
+                key={key}
+                onClick={() => handleTabChange(key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 ${
+                  activeTab === key
+                    ? activeCls
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Divider */}
+          <div className="w-px h-6 bg-slate-200 dark:bg-slate-600 hidden sm:block" />
+
+          {/* Game select */}
           <select
             value={gameFilter}
             onChange={e => handleGameFilter(e.target.value)}
-            className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+            className="text-sm border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-1.5
+                       bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200
+                       focus:outline-none focus:ring-2 focus:ring-indigo-400/50"
           >
             <option value="">전체 게임</option>
             {gamesError
               ? <option disabled>게임 목록 로드 실패</option>
               : filteredGames.map(g => (
-                <option key={g.id} value={String(g.id)}>{g.name}</option>
-              ))
+                  <option key={g.id} value={String(g.id)}>{g.name}</option>
+                ))
             }
           </select>
+
+          {/* Loading indicator for detail fetch */}
+          {detailLoading && (
+            <span className="text-xs text-slate-400 dark:text-slate-500 ml-auto">불러오는 중...</span>
+          )}
         </div>
       </div>
 
-      {/* 이슈 목록 */}
+      {/* Alert grid */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} />)}
         </div>
       ) : alerts.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
-          <p className="text-4xl mb-3">✅</p>
-          <p className="text-sm">감지된 이슈가 없습니다.</p>
+        <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
+          <CheckCircle size={48} className="text-green-500" strokeWidth={1.5} />
+          <p className="text-lg font-semibold text-slate-700 dark:text-slate-300">이슈 없음</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">현재 감지된 이슈가 없습니다.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {alerts.map(alert => (
             <AlertCard
               key={alert.id}
@@ -190,7 +253,7 @@ export default function Alerts() {
         </div>
       )}
 
-      {/* 상세 패널 */}
+      {/* Detail panel */}
       {selectedAlert && (
         <AlertDetail
           alert={selectedAlert}

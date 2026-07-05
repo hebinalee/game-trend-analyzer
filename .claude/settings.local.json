@@ -2,27 +2,23 @@
   "permissions": {
     "allow": [
       "Bash(python:*)",
-      "Bash(node -e ':*)",
       "Bash(pip install:*)",
       "Bash(python3:*)",
       "Bash(conda --version)",
       "Bash(conda create:*)",
-      "Bash(/home/hebinalee/miniconda3/envs/game-trend/bin/pip install:*)",
-      "Bash(/home/hebinalee/miniconda3/envs/game-trend/bin/python:*)",
       "Bash(npm run:*)",
       "Bash(npm install:*)",
       "Bash(npx vite:*)",
-      "Bash(lsof -ti:5173)",
-      "Bash(xargs kill:*)",
-      "Bash(lsof -ti:5174)",
+      "Bash(node -e ':*)",
+      "Bash(node --input-type=module --eval ':*)",
       "Bash(ls:*)",
-      "Bash(docker-compose up:*)",
-      "Bash(docker-compose down:*)",
+      "Bash(xargs kill:*)",
+      "Bash(lsof -ti:*)",
+      "Bash(docker-compose *)",
       "Bash(curl -s \"http://localhost:8000/api/*)",
-      "Bash(curl -s -X POST \"http://localhost:8000/api/*)",
       "Bash(curl -sv \"http://localhost:8000/api/*)",
-      "Bash(docker-compose -f /mnt/d/code/agent/team_hebina/game-trend-analyzer/docker-compose.yml restart backend)",
-      "Bash(grep -Ev \"Counter-Strike|Dota 2$|PUBG: BATTLE|Elden Ring|Baldur|Rust|Cyberpunk|Valheim|Terraria\")"
+      "Bash(curl -s -X POST \"http://localhost:8000/api/*)",
+      "Bash(grep -Ev *)"
     ]
   }
 }

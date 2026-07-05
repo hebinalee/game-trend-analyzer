@@ -20,6 +20,7 @@
 - [2026-06-28 — Reddit 데이터 수집 테스트 및 포털 통합](#2026-06-28--reddit-데이터-수집-테스트-및-포털-통합-featuremulti-platform)
 - [2026-07-02 — 모바일 게임 Top 10 확정 및 Google Play · App Store 크롤러 추가](#2026-07-02--모바일-게임-top-10-확정-및-google-play--app-store-크롤러-추가-featuremulti-platform)
 - [2026-07-03 — 포탈 플랫폼 필터 추가 (Steam / 모바일 분리)](#2026-07-03--포탈-플랫폼-필터-추가-steam--모바일-분리)
+- [2026-07-05 — 프론트엔드 UI 전면 개편 (프로덕션 수준 업그레이드)](#2026-07-05--프론트엔드-ui-전면-개편-프로덕션-수준-업그레이드)
 - [현재 상태 및 미결 사항](#현재-상태-및-미결-사항)
 
 ---
@@ -505,6 +506,46 @@ GET /api/posts/{game_id}?source=reddit&days_back=1&limit=50
 
 ---
 
+## 2026-07-05 — 프론트엔드 UI 전면 개편 (프로덕션 수준 업그레이드)
+
+**배경:** 기존 포탈은 Tailwind CSS 기반의 기능 중심 레이아웃으로, 데모 수준의 완성도였다. 서비스 출시를 목표로 Linear·Vercel·Supabase 급의 프로덕션 품질로 전면 재설계했다.
+
+**핵심 변경 사항:**
+
+| 영역 | 기존 | 변경 후 |
+|------|------|---------|
+| 레이아웃 | 상단 텍스트 내비게이션 | 다크 사이드바 (240px, 데스크탑) + 아이콘 탑바 (모바일) |
+| 폰트 | 시스템 기본 | Inter (Google Fonts) |
+| 아이콘 | 이모지 | lucide-react (일관된 SVG 아이콘 라이브러리) |
+| 알림 | 브라우저 `alert()` | Toast 컴포넌트 (`useToast` 훅, 슬라이드인 애니메이션) |
+| 감성 색상 | 탁한 세이지 그린·테라코타 | 선명한 green-500 · slate-400 · red-500 |
+
+**페이지별 주요 개선:**
+
+*대시보드:*
+- 모니터링 게임 수 · 수집 데이터 · 활성 이슈를 보여주는 3-stat 요약 카드 행 추가
+- 플랫폼 탭에 아이콘(Monitor / Smartphone / Layers) 추가, 세그먼트 스위처 디자인으로 변경
+- `ReportCard`: `rounded-2xl`, 플랫폼 배지, 심각도 라벨 배지, 감성 분포 도트 칩
+
+*이슈 트래킹:*
+- 필터 영역을 `rounded-2xl` 카드로 통합
+- `AlertCard`: 심각도별 배경 틴트, lucide 아이콘 배지, Alert 유형 행 추가
+- `AlertDetail`: 심각도 그라디언트 헤더, 슬라이드인 패널 애니메이션, 아이콘 부서 탭, Loader2 스피너
+
+*게임 상세:*
+- 사이드바 탭에 아이콘 및 플랫폼 배지 추가
+- `AdvisorChat`: 채팅 버블 리디자인, Bot 아바타, 메시지 타임스탬프
+- `TrendChart`: 커스텀 툴팁, 클린 축 스타일링
+
+**신규 파일:**
+
+| 파일 | 역할 |
+|------|------|
+| `frontend/src/components/Toast.jsx` | `ToastProvider` + `useToast` 훅 — 전역 토스트 알림 시스템 |
+| `frontend/src/components/index.js` | 컴포넌트 배럴 익스포트 |
+
+---
+
 ## 현재 상태 및 미결 사항
 
 | 항목 | 상태 |
@@ -517,4 +558,5 @@ GET /api/posts/{game_id}?source=reddit&days_back=1&limit=50
 | 멀티 플랫폼 소스 확장 | 완료 (feature/multi-platform) |
 | Reddit 포털 통합 (게시글 탭 + 플랫폼 뱃지) | 완료 |
 | 모바일 Top 10 확정 + Google Play / App Store 크롤러 | 완료 |
+| 프론트엔드 UI 전면 개편 (프로덕션 수준) | 완료 |
 | Reddit API 키 발급 및 수집 | 미완료 (API 정책 페이지 진입 불가 이슈) |
