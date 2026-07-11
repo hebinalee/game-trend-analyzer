@@ -1,9 +1,10 @@
 [![한국어](https://img.shields.io/badge/언어-한국어-blue)](README.md)
 [![English](https://img.shields.io/badge/Language-English-blue)](README-en.md)
 
-# Game Trend Analyzer
+# Game Trend Analyzer (GTA)
+### 게임 동향 기상청
 
-A dashboard service that collects and analyzes daily user reviews and official news from the top 10 Steam games, giving game operators, designers, and marketers an at-a-glance view of community trends.
+A live ops dashboard that collects and analyzes reviews, community posts, and store data across 10 Steam PC games and 10 mobile games — from Steam, Reddit, Google Play, and App Store — giving game operators, designers, and marketers an at-a-glance view of community trends.
 
 ## Tech Stack
 

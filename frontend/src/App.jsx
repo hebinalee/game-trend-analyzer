@@ -57,10 +57,10 @@ function Sidebar({ dark, setDark, criticalCount }) {
         </div>
         <div className="min-w-0">
           <p className="text-sm font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent leading-none">
-            GTA
+            게임 동향 기상청
           </p>
           <p className="text-[10px] text-slate-500 mt-0.5 truncate">
-            Game Trend Analyzer
+            Game Trend Analyzer (GTA)
           </p>
         </div>
       </div>
@@ -115,7 +115,7 @@ function MobileTopBar({ dark, setDark, criticalCount }) {
           <TrendingUp size={15} strokeWidth={2.5} className="text-white" />
         </div>
         <span className="text-sm font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-          GTA
+          게임 동향 기상청
         </span>
       </div>
 

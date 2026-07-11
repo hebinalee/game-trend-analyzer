@@ -162,7 +162,7 @@ export default function Dashboard() {
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-              게임 유저 동향
+              게임 동향 기상청
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               실시간 감성 분석 및 트렌드 모니터링

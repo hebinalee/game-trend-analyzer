@@ -21,6 +21,7 @@
 - [2026-07-02 — Mobile Top 10 Finalized + Google Play & App Store Crawlers Added](#2026-07-02--mobile-top-10-finalized--google-play--app-store-crawlers-added-featuremulti-platform)
 - [2026-07-03 — Portal Platform Filter (Steam / Mobile Separation)](#2026-07-03--portal-platform-filter-steam--mobile-separation)
 - [2026-07-05 — Frontend UI Complete Overhaul (Production-Grade Upgrade)](#2026-07-05--frontend-ui-complete-overhaul-production-grade-upgrade)
+- [2026-07-11 — Service Name Finalized: 게임 동향 기상청 / Game Trend Analyzer (GTA)](#2026-07-11--service-name-finalized-게임-동향-기상청--game-trend-analyzer-gta)
 - [Current Status and Open Items](#current-status-and-open-items)
 
 ---
@@ -546,6 +547,29 @@ Platform                          ← parent label
 
 ---
 
+## 2026-07-11 — Service Name Finalized: 게임 동향 기상청 / Game Trend Analyzer (GTA)
+
+**Background:** As the service approached production readiness, an official name was needed. A Korean name evoking weather forecasting and an intuitive English name were settled on.
+
+**Rationale:**
+
+| Language | Name | Reason |
+|----------|------|--------|
+| Korean | **게임 동향 기상청** | "기상청" (meteorological agency) naturally evokes monitoring and forecasting; the public-institution parody blends credibility with humor |
+| English | **Game Trend Analyzer (GTA)** | Descriptive and immediately clear; the GTA acronym doubles as an amusing nod to the famous game franchise |
+
+**Changed Files:**
+
+| File | Change |
+|------|--------|
+| `frontend/index.html` | `<title>` → `게임 동향 기상청 \| Game Trend Analyzer` |
+| `frontend/src/App.jsx` | Sidebar logo: `게임 동향 기상청` / `Game Trend Analyzer (GTA)`; mobile top bar updated |
+| `frontend/src/pages/Dashboard.jsx` | Page heading → `게임 동향 기상청` |
+| `README.md` | Title and service description updated |
+| `README-en.md` | Title and service description updated |
+
+---
+
 ## Current Status and Open Items
 
 | Item | Status |
@@ -559,4 +583,5 @@ Platform                          ← parent label
 | Reddit portal integration (posts tab + platform badge) | Complete |
 | Mobile Top 10 + Google Play / App Store crawlers | Complete |
 | Frontend UI complete overhaul (production-grade) | Complete |
+| Service name finalized (게임 동향 기상청 / GTA) | Complete |
 | Reddit API key setup | Pending (policy page access issue) |

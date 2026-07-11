@@ -1,10 +1,11 @@
 [![한국어](https://img.shields.io/badge/언어-한국어-blue)](README.md)
 [![English](https://img.shields.io/badge/Language-English-blue)](README-en.md)
 
-# Game Trend Analyzer
+# 게임 동향 기상청
+### Game Trend Analyzer (GTA)
 
-Steam 인기 게임 10개를 대상으로 매일 유저 리뷰와 공식 뉴스를 수집·분석하여
-게임 운영자/기획자/마케터가 커뮤니티 동향을 한눈에 파악할 수 있는 대시보드 서비스입니다.
+Steam PC 게임 10종 · 모바일 게임 10종을 대상으로 Steam 리뷰, Reddit, Google Play, App Store 데이터를 수집·분석하여
+게임 운영자/기획자/마케터가 커뮤니티 동향을 한눈에 파악할 수 있는 라이브 옵스 대시보드 서비스입니다.
 
 ## 기술 스택
 
